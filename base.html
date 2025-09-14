@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base 编解码</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/base58/1.0.0/base58.min.js"></script>
-    <script src="https://unpkg.com/base91@0.1.0/base91.js"></script>
     <link href="dist/output.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
@@ -14,11 +12,11 @@
         
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-600">输入文本</label>
-            <textarea id="inputText" rows="4" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500" required></textarea>
+            <textarea id="inputText" rows="4" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500" required placeholder="输入文本或编码后的字符串"></textarea>
         </div>
         
         <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-600">类型</label>
+            <label class="block text-sm font-medium text-gray-600">编码类型</label>
             <select id="baseType" class="mt-1 w-full p-2 border rounded-md">
                 <option value="base64">Base64</option>
                 <option value="base58">Base58</option>
@@ -49,45 +47,139 @@
         const outputText = document.getElementById('outputText');
         const copyButton = document.getElementById('copyButton');
 
+        // Base58 实现
+        const base58Alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        function base58Encode(bytes) {
+            let num = BigInt(0);
+            for (let byte of bytes) {
+                num = num * 256n + BigInt(byte);
+            }
+            let result = '';
+            while (num > 0n) {
+                const remainder = Number(num % 58n);
+                result = base58Alphabet[remainder] + result;
+                num = num / 58n;
+            }
+            for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
+                result = '1' + result;
+            }
+            return result || '1';
+        }
+        function base58Decode(str) {
+            if (!/^[1-9A-HJ-NP-Za-km-z]+$/.test(str)) {
+                throw new Error('无效Base58字符');
+            }
+            let num = BigInt(0);
+            for (let char of str) {
+                num = num * 58n + BigInt(base58Alphabet.indexOf(char));
+            }
+            let bytes = [];
+            while (num > 0n) {
+                bytes.unshift(Number(num % 256n));
+                num = num / 256n;
+            }
+            for (let i = 0; i < str.length && str[i] === '1'; i++) {
+                bytes.unshift(0);
+            }
+            return new Uint8Array(bytes);
+        }
+
+        // Base91 实现
+        const base91Alphabet = Array.from({length: 91}, (_, i) => String.fromCharCode(i + 33));
+        function base91Encode(bytes) {
+            let num = BigInt(0);
+            for (let byte of bytes) {
+                num = num * 256n + BigInt(byte);
+            }
+            let result = '';
+            while (num > 0n) {
+                const remainder = Number(num % 91n);
+                result = base91Alphabet[remainder] + result;
+                num = num / 91n;
+            }
+            return result || base91Alphabet[0];
+        }
+        function base91Decode(str) {
+            if (!/^[!-~]+$/.test(str)) {
+                throw new Error('无效Base91字符（需为ASCII 33-123）');
+            }
+            let num = BigInt(0);
+            for (let char of str) {
+                num = num * 91n + BigInt(base91Alphabet.indexOf(char));
+            }
+            let bytes = [];
+            while (num > 0n) {
+                bytes.unshift(Number(num % 256n));
+                num = num / 256n;
+            }
+            return new Uint8Array(bytes.length ? bytes : [0]);
+        }
+
+        // 编码按钮
         encodeButton.addEventListener('click', () => {
-            const input = inputText.value;
-            let result;
-            switch (baseType.value) {
-                case 'base64':
-                    result = btoa(input);
-                    break;
-                case 'base58':
-                    result = Base58.encode(input);
-                    break;
-                case 'base91':
-                    result = Base91.encode(input);
-                    break;
+            const input = inputText.value.trim();
+            if (!input) {
+                outputText.value = '请输入文本';
+                return;
             }
-            outputText.value = result;
-            copyButton.classList.remove('hidden');
+            try {
+                const bytes = new TextEncoder().encode(input);
+                let result;
+                switch (baseType.value) {
+                    case 'base64':
+                        result = btoa(String.fromCharCode(...bytes));
+                        break;
+                    case 'base58':
+                        result = base58Encode(bytes);
+                        break;
+                    case 'base91':
+                        result = base91Encode(bytes);
+                        break;
+                }
+                outputText.value = result;
+                copyButton.classList.remove('hidden');
+            } catch (e) {
+                outputText.value = '编码失败：' + e.message;
+                copyButton.classList.add('hidden');
+            }
         });
 
+        // 解码按钮
         decodeButton.addEventListener('click', () => {
-            const input = inputText.value;
-            let result;
-            switch (baseType.value) {
-                case 'base64':
-                    result = atob(input);
-                    break;
-                case 'base58':
-                    result = Base58.decode(input);
-                    break;
-                case 'base91':
-                    result = Base91.decode(input);
-                    break;
+            const input = inputText.value.trim();
+            if (!input) {
+                outputText.value = '请输入编码后的字符串';
+                return;
             }
-            outputText.value = result;
-            copyButton.classList.remove('hidden');
+            try {
+                let bytes;
+                switch (baseType.value) {
+                    case 'base64':
+                        bytes = Uint8Array.from(atob(input), c => c.charCodeAt(0));
+                        break;
+                    case 'base58':
+                        bytes = base58Decode(input);
+                        break;
+                    case 'base91':
+                        bytes = base91Decode(input);
+                        break;
+                }
+                const result = new TextDecoder().decode(bytes);
+                outputText.value = result;
+                copyButton.classList.remove('hidden');
+            } catch (e) {
+                outputText.value = '解码失败：' + e.message;
+                copyButton.classList.add('hidden');
+            }
         });
 
+        // 复制按钮
         copyButton.addEventListener('click', () => {
-            navigator.clipboard.writeText(outputText.value);
-            alert('已复制');
+            navigator.clipboard.writeText(outputText.value).then(() => {
+                alert('已复制');
+            }).catch(err => {
+                alert('复制失败：' + err);
+            });
         });
     </script>
 </body>
