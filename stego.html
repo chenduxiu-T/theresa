@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>隐写术工具</title>
-    <script src="https://unpkg.com/stego-lsb@1.0.1/stego-lsb.min.js"></script>
     <link href="dist/output.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
@@ -12,25 +11,30 @@
         <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">隐写术工具</h1>
         
         <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-600">输入文本</label>
-            <textarea id="inputText" rows="4" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500" required></textarea>
+            <label class="block text-sm font-medium text-gray-600">输入要隐藏的文本</label>
+            <textarea id="inputText" rows="4" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="请输入要隐藏的文本"></textarea>
         </div>
         
         <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-600">上传图片</label>
+            <label class="block text-sm font-medium text-gray-600">上传图片 (PNG推荐)</label>
             <input id="imageFile" type="file" accept="image/*" class="mt-1 w-full p-2 border rounded-md">
         </div>
         
-        <button id="hideButton" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition mb-4">隐藏文本</button>
-        
-        <button id="extractButton" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">提取文本</button>
-        
-        <div class="mt-6">
-            <label class="block text-sm font-medium text-gray-600">结果</label>
-            <textarea id="outputText" rows="4" class="mt-1 w-full p-2 border rounded-md bg-gray-50" readonly></textarea>
+        <div class="flex justify-center space-x-4 mb-6">
+            <button id="hideButton" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">隐藏文本</button>
+            <button id="extractButton" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">提取文本</button>
         </div>
         
-        <div id="outputImage" class="mt-6"></div>
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">结果</label>
+            <textarea id="outputText" rows="4" class="mt-1 w-full p-2 border rounded-md bg-gray-50" readonly placeholder="隐藏或提取结果"></textarea>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">输出图片</label>
+            <img id="outputImage" class="mt-1 w-full hidden" alt="隐藏文本后的图片">
+            <a id="downloadButton" class="bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition hidden mt-2 inline-block">手动下载图片</a>
+        </div>
     </div>
 
     <script>
@@ -40,10 +44,71 @@
         const extractButton = document.getElementById('extractButton');
         const outputText = document.getElementById('outputText');
         const outputImage = document.getElementById('outputImage');
+        const downloadButton = document.getElementById('downloadButton');
 
-        hideButton.addEventListener('click', () => {
-            const file = imageFile.files[0];
-            if (!file) return;
+        // 将文本转为二进制比特数组
+        function textToBits(text) {
+            const bytes = new TextEncoder().encode(text);
+            const bits = [];
+            for (let byte of bytes) {
+                for (let i = 7; i >= 0; i--) {
+                    bits.push((byte >> i) & 1);
+                }
+            }
+            return bits;
+        }
+
+        // 从比特数组恢复文本
+        function bitsToText(bits) {
+            const bytes = [];
+            for (let i = 0; i < bits.length; i += 8) {
+                let byte = 0;
+                for (let j = 0; j < 8 && i + j < bits.length; j++) {
+                    byte = (byte << 1) | bits[i + j];
+                }
+                bytes.push(byte);
+            }
+            return new TextDecoder().decode(new Uint8Array(bytes));
+        }
+
+        // 隐藏文本到图像（LSB）
+        function hideTextInImage(imageData, text) {
+            const bits = textToBits(text + '\0'); // 添加终止符
+            const pixels = imageData.data; // RGBA 数组
+            const capacity = Math.floor(pixels.length / 4 * 3 / 8); // 每个像素3位
+            if (bits.length > capacity * 8) {
+                throw new Error(`文本过长，最大容量 ${capacity} 字节，当前 ${Math.ceil(bits.length / 8)} 字节`);
+            }
+
+            let bitIndex = 0;
+            for (let i = 0; i < pixels.length && bitIndex < bits.length; i += 4) {
+                for (let channel = 0; channel < 3 && bitIndex < bits.length; channel++) {
+                    pixels[i + channel] = (pixels[i + channel] & 0xFE) | bits[bitIndex];
+                    bitIndex++;
+                }
+            }
+            return imageData;
+        }
+
+        // 从图像提取文本（LSB）
+        function extractTextFromImage(imageData) {
+            const pixels = imageData.data;
+            const bits = [];
+            for (let i = 0; i < pixels.length; i += 4) {
+                for (let channel = 0; channel < 3; channel++) {
+                    bits.push(pixels[i + channel] & 1);
+                }
+            }
+            let text = bitsToText(bits);
+            const endIndex = text.indexOf('\0');
+            return endIndex >= 0 ? text.slice(0, endIndex) : text;
+        }
+
+        // 处理图像文件
+        function processImage(file, callback) {
+            if (!file) {
+                throw new Error('请上传图片');
+            }
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image();
@@ -53,36 +118,65 @@
                     canvas.height = img.height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0);
-                    const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    stegoLSB.hideData(data, inputText.value);
-                    ctx.putImageData(data, 0, 0);
-                    outputImage.innerHTML = '';
-                    outputImage.appendChild(canvas);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    callback(imageData, canvas, ctx);
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
+        }
+
+        // 自动下载图片
+        function triggerDownload(dataUrl, filename) {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 隐藏按钮
+        hideButton.addEventListener('click', () => {
+            outputText.value = '';
+            outputImage.classList.add('hidden');
+            downloadButton.classList.add('hidden');
+            const text = inputText.value.trim();
+            if (!text) {
+                outputText.value = '请输入要隐藏的文本';
+                return;
+            }
+            try {
+                processImage(imageFile.files[0], (imageData, canvas, ctx) => {
+                    const modifiedImageData = hideTextInImage(imageData, text);
+                    ctx.putImageData(modifiedImageData, 0, 0);
+                    const dataUrl = canvas.toDataURL('image/png');
+                    outputImage.src = dataUrl;
+                    outputImage.classList.remove('hidden');
+                    downloadButton.classList.remove('hidden');
+                    downloadButton.href = dataUrl;
+                    downloadButton.download = 'stego_image.png';
+                    outputText.value = '文本已隐藏到图片中，正在自动下载...';
+                    triggerDownload(dataUrl, 'stego_image.png');
+                });
+            } catch (e) {
+                outputText.value = '隐藏失败：' + e.message;
+            }
         });
 
+        // 提取按钮
         extractButton.addEventListener('click', () => {
-            const file = imageFile.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const text = stegoLSB.revealData(data);
-                    outputText.value = text;
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+            outputText.value = '';
+            outputImage.classList.add('hidden');
+            downloadButton.classList.add('hidden');
+            try {
+                processImage(imageFile.files[0], (imageData) => {
+                    const extractedText = extractTextFromImage(imageData);
+                    outputText.value = extractedText || '未提取到文本';
+                });
+            } catch (e) {
+                outputText.value = '提取失败：' + e.message;
+            }
         });
     </script>
 </body>
