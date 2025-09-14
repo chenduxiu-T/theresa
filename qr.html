@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二维码生成/解析</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+    <link href="dist/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">二维码生成/解析</h1>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">输入文本</label>
+            <textarea id="inputText" rows="4" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500" required></textarea>
+        </div>
+        
+        <button id="generateQR" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition mb-4">生成二维码</button>
+        
+        <div id="qrcode" class="mx-auto mb-6"></div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">上传二维码图片</label>
+            <input id="qrFile" type="file" accept="image/*" class="mt-1 w-full p-2 border rounded-md">
+        </div>
+        
+        <button id="parseQR" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">解析二维码</button>
+        
+        <div class="mt-6">
+            <label class="block text-sm font-medium text-gray-600">解析结果</label>
+            <textarea id="outputText" rows="2" class="mt-1 w-full p-2 border rounded-md bg-gray-50" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        const inputText = document.getElementById('inputText');
+        const generateQR = document.getElementById('generateQR');
+        const qrcode = document.getElementById('qrcode');
+        const qrFile = document.getElementById('qrFile');
+        const parseQR = document.getElementById('parseQR');
+        const outputText = document.getElementById('outputText');
+
+        generateQR.addEventListener('click', () => {
+            qrcode.innerHTML = '';
+            new QRCode(qrcode, inputText.value);
+        });
+
+        parseQR.addEventListener('click', () => {
+            const file = qrFile.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    if (code) {
+                        outputText.value = code.data;
+                    } else {
+                        outputText.value = '无法解析二维码';
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    </script>
+</body>
+</html>

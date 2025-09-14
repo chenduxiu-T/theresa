@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短链生成</title>
+    <link href="dist/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">短链生成</h1>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">输入长链接</label>
+            <input id="inputUrl" type="text" class="mt-1 w-full p-2 border rounded-md" required>
+        </div>
+        
+        <button id="generateButton" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">生成</button>
+        
+        <div class="mt-6">
+            <label class="block text-sm font-medium text-gray-600">短链结果</label>
+            <textarea id="outputText" rows="2" class="mt-1 w-full p-2 border rounded-md bg-gray-50" readonly></textarea>
+        </div>
+        
+        <div class="flex justify-center space-x-4 mt-4">
+            <button id="copyButton" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition hidden">复制结果</button>
+        </div>
+    </div>
+
+    <script>
+        const inputUrl = document.getElementById('inputUrl');
+        const generateButton = document.getElementById('generateButton');
+        const outputText = document.getElementById('outputText');
+        const copyButton = document.getElementById('copyButton');
+
+        generateButton.addEventListener('click', () => {
+            const url = inputUrl.value;
+            const short = 'https://short.com/' + Math.random().toString(36).substr(2, 8);
+            outputText.value = short;
+            copyButton.classList.remove('hidden');
+        });
+
+        copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(outputText.value);
+            alert('已复制');
+        });
+    </script>
+</body>
+</html>

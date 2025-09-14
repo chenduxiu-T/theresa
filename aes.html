@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AES-256 + 日文Base 加解密工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link href="dist/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">AES-256 + 日文Base 加解密工具</h1>
+        
+        <!-- 输入框 -->
+        <div class="mb-6">
+            <label id="inputLabel" class="block text-sm font-medium text-gray-600">输入明文</label>
+            <textarea id="inputText" rows="4" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500" required placeholder="加密请输入明文，解密请输入日文密文（仅含平假名、片假名和‘ン’）"></textarea>
+        </div>
+        
+        <!-- 选择按钮 -->
+        <div class="flex justify-center space-x-4 mb-6">
+            <button id="encryptButton" class="bg-blue-700 text-white py-2 px-4 rounded-md hover:bg-blue-800 transition">加密</button>
+            <button id="decryptButton" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">解密</button>
+            <button id="clearButton" class="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition">清空</button>
+        </div>
+        
+        <!-- 结果框 -->
+        <div class="mb-6">
+            <label id="outputLabel" class="block text-sm font-medium text-gray-600">密文结果</label>
+            <textarea id="outputText" rows="4" class="mt-1 w-full p-2 border rounded-md bg-gray-50" readonly></textarea>
+            <p id="outputInfo" class="text-sm text-gray-500 mt-1"></p>
+        </div>
+        
+        <!-- 复制和下载按钮 -->
+        <div class="flex justify-center space-x-4">
+            <button id="copyButton" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition hidden">复制结果</button>
+            <button id="downloadButton" class="bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition hidden">下载结果</button>
+        </div>
+    </div>
+
+    <script>
+        // 固定AES-256密钥（32字节，256位）
+        const fixedKey = 'z7jgX9RwezqpY588dRphLRMTE3ie2uTX';
+        // 固定IV（16字节，128位）
+        const fixedIV = 'z7jgX9RwezqpY588';
+
+        // 自定义Base64字母表：64个唯一日文字符
+        const customAlphabet = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわゐゑをんアイウエオカキクケコサシスセソタ';
+        const paddingChar = 'ン'; // 自定义填充字符
+
+        // 验证字母表长度
+        if (customAlphabet.length !== 64) {
+            throw new Error('字母表长度必须为64，当前为' + customAlphabet.length);
+        }
+
+        // 构建编码/解码映射
+        const encodeMap = new Map();
+        const decodeMap = new Map();
+        for (let i = 0; i < customAlphabet.length; i++) {
+            encodeMap.set(i, customAlphabet[i]);
+            decodeMap.set(customAlphabet[i], i);
+        }
+
+        // 清理输入密文，移除非法字符
+        function cleanCiphertext(input) {
+            const validChars = new Set([...customAlphabet, paddingChar]);
+            let cleaned = '';
+            let invalidChars = new Set();
+            for (let char of input) {
+                if (validChars.has(char)) {
+                    cleaned += char;
+                } else {
+                    invalidChars.add(char);
+                }
+            }
+            return { cleaned, invalidChars };
+        }
+
+        // 自定义Base64编码函数（3字节 -> 4字符）
+        function customBaseEncode(bytes) {
+            let output = '';
+            for (let i = 0; i < bytes.length; i += 3) {
+                const b1 = bytes[i];
+                const b2 = i + 1 < bytes.length ? bytes[i + 1] : 0;
+                const b3 = i + 2 < bytes.length ? bytes[i + 2] : 0;
+
+                const enc1 = b1 >> 2;
+                const enc2 = ((b1 & 3) << 4) | (b2 >> 4);
+                const enc3 = ((b2 & 15) << 2) | (b3 >> 6);
+                const enc4 = b3 & 63;
+
+                if (i + 1 >= bytes.length) { // 只剩一个字节
+                    output += encodeMap.get(enc1) + encodeMap.get(enc2) + paddingChar + paddingChar;
+                } else if (i + 2 >= bytes.length) { // 只剩两个字节
+                    output += encodeMap.get(enc1) + encodeMap.get(enc2) + encodeMap.get(enc3) + paddingChar;
+                } else {
+                    output += encodeMap.get(enc1) + encodeMap.get(enc2) + encodeMap.get(enc3) + encodeMap.get(enc4);
+                }
+            }
+            return output;
+        }
+
+        // 自定义Base64解码函数（4字符 -> 3字节）
+        function customBaseDecode(input) {
+            let bytes = [];
+            for (let i = 0; i < input.length; i += 4) {
+                const c1 = decodeMap.get(input[i]);
+                const c2 = decodeMap.get(input[i + 1]);
+                const c3 = input[i + 2] === paddingChar ? 0 : decodeMap.get(input[i + 2]);
+                const c4 = input[i + 3] === paddingChar ? 0 : decodeMap.get(input[i + 3]);
+
+                bytes.push((c1 << 2) | (c2 >> 4));
+                if (input[i + 2] !== paddingChar) bytes.push(((c2 & 15) << 4) | (c3 >> 2));
+                if (input[i + 3] !== paddingChar) bytes.push(((c3 & 3) << 6) | c4);
+            }
+            return new Uint8Array(bytes);
+        }
+
+        // 按钮状态管理
+        const encryptButton = document.getElementById('encryptButton');
+        const decryptButton = document.getElementById('decryptButton');
+        const clearButton = document.getElementById('clearButton');
+        const inputLabel = document.getElementById('inputLabel');
+        const outputLabel = document.getElementById('outputLabel');
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const outputInfo = document.getElementById('outputInfo');
+        const copyButton = document.getElementById('copyButton');
+        const downloadButton = document.getElementById('downloadButton');
+        let mode = 'encrypt'; // 默认模式为加密
+        let isProcessing = false; // 防止多次点击
+
+        // 更新标签和按钮样式
+        function updateUI() {
+            inputLabel.textContent = mode === 'encrypt' ? '输入明文' : '输入密文';
+            outputLabel.textContent = mode === 'encrypt' ? '密文结果' : '明文结果';
+            encryptButton.classList.toggle('bg-blue-700', mode === 'encrypt');
+            encryptButton.classList.toggle('bg-blue-500', mode !== 'encrypt');
+            decryptButton.classList.toggle('bg-blue-700', mode === 'decrypt');
+            decryptButton.classList.toggle('bg-blue-500', mode !== 'decrypt');
+            encryptButton.disabled = isProcessing;
+            decryptButton.disabled = isProcessing;
+            clearButton.disabled = isProcessing;
+            outputInfo.textContent = '';
+        }
+
+        // 初始化UI
+        updateUI();
+
+        // 清空按钮
+        clearButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            inputText.value = '';
+            outputText.value = '';
+            outputInfo.textContent = '';
+            copyButton.classList.add('hidden');
+            downloadButton.classList.add('hidden');
+            updateUI();
+        });
+
+        // 加密按钮点击
+        encryptButton.addEventListener('click', async function(e) {
+            e.preventDefault();
+            if (isProcessing) return;
+            isProcessing = true;
+            updateUI();
+            outputText.value = ''; // 清空结果
+            outputInfo.textContent = '';
+            const input = inputText.value.trim();
+            if (!input) {
+                outputText.value = '加密失败：请输入明文';
+                isProcessing = false;
+                updateUI();
+                return;
+            }
+            try {
+                // 使用固定IV
+                const iv = CryptoJS.enc.Utf8.parse(fixedIV);
+                // 执行AES-256-CBC加密
+                const encrypted = CryptoJS.AES.encrypt(input, fixedKey, {
+                    iv: iv,
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+                // 获取密文Base64字符串
+                const base64Ciphertext = encrypted.toString();
+                // 转换为字节数组（IV + 密文）
+                const ciphertextBytes = CryptoJS.enc.Base64.parse(base64Ciphertext);
+                const ivBytes = CryptoJS.enc.Utf8.parse(fixedIV);
+                const combined = new Uint8Array(ivBytes.sigBytes + ciphertextBytes.sigBytes);
+                for (let i = 0; i < ivBytes.sigBytes; i++) {
+                    combined[i] = (ivBytes.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+                }
+                for (let i = 0; i < ciphertextBytes.sigBytes; i++) {
+                    combined[ivBytes.sigBytes + i] = (ciphertextBytes.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+                }
+                // 验证密文长度
+                if (ciphertextBytes.sigBytes % 16 !== 0) {
+                    throw new Error(`加密生成无效密文长度：${ciphertextBytes.sigBytes}字节，需为16的倍数`);
+                }
+                // 转换为自定义Base64编码
+                const customCiphertext = customBaseEncode(combined);
+                // 显示结果
+                outputText.value = customCiphertext;
+                outputInfo.textContent = `密文长度：${customCiphertext.length}字符（${combined.length}字节，IV 16字节 + 密文 ${ciphertextBytes.sigBytes}字节）`;
+                copyButton.classList.remove('hidden');
+                downloadButton.classList.remove('hidden');
+                // 配置复制按钮
+                copyButton.onclick = () => {
+                    navigator.clipboard.writeText(customCiphertext).then(() => {
+                        alert('已复制到剪贴板');
+                    }).catch(err => {
+                        alert('复制失败：' + err);
+                    });
+                };
+                // 配置下载按钮
+                downloadButton.onclick = () => {
+                    const blob = new Blob([customCiphertext], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'encrypted.txt';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                };
+            } catch (error) {
+                outputText.value = '加密失败：' + error.message;
+                outputInfo.textContent = '';
+                copyButton.classList.add('hidden');
+                downloadButton.classList.add('hidden');
+            }
+            isProcessing = false;
+            updateUI();
+        });
+
+        // 解密按钮点击
+        decryptButton.addEventListener('click', async function(e) {
+            e.preventDefault();
+            if (isProcessing) return;
+            isProcessing = true;
+            updateUI();
+            outputText.value = ''; // 清空结果
+            outputInfo.textContent = '';
+            let input = inputText.value.trim();
+            let decodedBytes = null;
+            try {
+                // 清理输入密文
+                const { cleaned, invalidChars } = cleanCiphertext(input);
+                if (invalidChars.size > 0) {
+                    alert(`警告：已移除密文中的非法字符：${[...invalidChars].join(', ')}`);
+                    inputText.value = cleaned; // 更新输入框
+                }
+                if (!cleaned) {
+                    throw new Error('密文为空，请输入有效的日文密文');
+                }
+                input = cleaned;
+                // 自定义Base64解码
+                decodedBytes = customBaseDecode(input);
+                // 验证总长度（至少16字节IV）
+                if (decodedBytes.length < 16) {
+                    throw new Error(`密文太短，无法提取IV（当前：${decodedBytes.length}字节，需至少16字节）`);
+                }
+                // 提取IV（前16字节）
+                const ivBytes = decodedBytes.slice(0, 16);
+                const iv = CryptoJS.lib.WordArray.create(ivBytes);
+                // 提取密文（剩余部分）
+                const ciphertextBytes = decodedBytes.slice(16);
+                if (ciphertextBytes.length === 0) {
+                    throw new Error('密文内容为空，无法解密');
+                }
+                // 验证密文长度
+                if (ciphertextBytes.length % 16 !== 0) {
+                    throw new Error(`密文长度无效：${ciphertextBytes.length}字节，必须是16的倍数`);
+                }
+                const ciphertextWordArray = CryptoJS.lib.WordArray.create(ciphertextBytes);
+                const base64Ciphertext = CryptoJS.enc.Base64.stringify(ciphertextWordArray);
+                // 执行AES-256-CBC解密
+                const decrypted = CryptoJS.AES.decrypt(base64Ciphertext, fixedKey, {
+                    iv: iv,
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+                const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+                if (!plaintext) {
+                    throw new Error('解密失败，可能是密文格式错误或数据损坏');
+                }
+                // 显示结果
+                outputText.value = plaintext;
+                outputInfo.textContent = `明文长度：${plaintext.length}字符`;
+                copyButton.classList.remove('hidden');
+                downloadButton.classList.remove('hidden');
+                // 配置复制按钮
+                copyButton.onclick = () => {
+                    navigator.clipboard.writeText(plaintext).then(() => {
+                        alert('已复制到剪贴板');
+                    }).catch(err => {
+                        alert('复制失败：' + err);
+                    });
+                };
+                // 配置下载按钮
+                downloadButton.onclick = () => {
+                    const blob = new Blob([plaintext], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'decrypted.txt';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                };
+            } catch (error) {
+                outputText.value = `解密失败：${error.message}\n请使用本工具重新生成密文，确保未被修改`;
+                outputInfo.textContent = `输入密文长度：${input.length}字符（${decodedBytes ? decodedBytes.length : 0}字节，IV ${decodedBytes ? 16 : 0}字节 + 密文 ${decodedBytes ? decodedBytes.length - 16 : 0}字节）`;
+                copyButton.classList.add('hidden');
+                downloadButton.classList.add('hidden');
+            }
+            isProcessing = false;
+            updateUI();
+        });
+    </script>
+</body>
+</html>

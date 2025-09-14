@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diff 工具</title>
+    <script src="https://unpkg.com/jsdiff@5.0.0/dist/diff.min.js"></script>
+    <link href="dist/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Diff 工具</h1>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">文本1</label>
+            <textarea id="text1" rows="4" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500" required></textarea>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">文本2</label>
+            <textarea id="text2" rows="4" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500" required></textarea>
+        </div>
+        
+        <button id="diffButton" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">对比差异</button>
+        
+        <div class="mt-6">
+            <label class="block text-sm font-medium text-gray-600">差异结果</label>
+            <div id="outputText" class="mt-1 w-full p-2 border rounded-md bg-gray-50 overflow-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        const text1 = document.getElementById('text1');
+        const text2 = document.getElementById('text2');
+        const diffButton = document.getElementById('diffButton');
+        const outputText = document.getElementById('outputText');
+
+        diffButton.addEventListener('click', () => {
+            const diff = Diff.diffChars(text1.value, text2.value);
+            outputText.innerHTML = '';
+            diff.forEach((part) => {
+                const span = document.createElement('span');
+                span.style.color = part.added ? 'green' : part.removed ? 'red' : 'grey';
+                span.textContent = part.value;
+                outputText.appendChild(span);
+            });
+        });
+    </script>
+</body>
+</html>

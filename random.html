@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随机密码/UUID 生成器</title>
+    <link href="dist/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">随机密码/UUID 生成器</h1>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">类型</label>
+            <select id="type" class="mt-1 w-full p-2 border rounded-md">
+                <option value="password">密码</option>
+                <option value="uuid">UUID</option>
+            </select>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">长度 (密码)</label>
+            <input id="length" type="number" value="16" class="mt-1 w-full p-2 border rounded-md">
+        </div>
+        
+        <button id="generateButton" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">生成</button>
+        
+        <div class="mt-6">
+            <label class="block text-sm font-medium text-gray-600">结果</label>
+            <textarea id="outputText" rows="2" class="mt-1 w-full p-2 border rounded-md bg-gray-50" readonly></textarea>
+        </div>
+        
+        <div class="flex justify-center space-x-4 mt-4">
+            <button id="copyButton" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition hidden">复制结果</button>
+        </div>
+    </div>
+
+    <script>
+        const type = document.getElementById('type');
+        const length = document.getElementById('length');
+        const generateButton = document.getElementById('generateButton');
+        const outputText = document.getElementById('outputText');
+        const copyButton = document.getElementById('copyButton');
+
+        generateButton.addEventListener('click', () => {
+            if (type.value === 'password') {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+                let pass = '';
+                for (let i = 0; i < parseInt(length.value); i++) {
+                    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                outputText.value = pass;
+            } else {
+                outputText.value = crypto.randomUUID ? crypto.randomUUID() : 'UUID示例';
+            }
+            copyButton.classList.remove('hidden');
+        });
+
+        copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(outputText.value);
+            alert('已复制');
+        });
+    </script>
+</body>
+</html>

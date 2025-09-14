@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进制转换</title>
+    <link href="dist/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">进制转换</h1>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">输入值</label>
+            <input id="inputValue" type="text" class="mt-1 w-full p-2 border rounded-md" required>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">输入进制</label>
+            <select id="fromBase" class="mt-1 w-full p-2 border rounded-md">
+                <option value="2">二进制</option>
+                <option value="8">八进制</option>
+                <option value="10">十进制</option>
+                <option value="16">十六进制</option>
+            </select>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-600">输出进制</label>
+            <select id="toBase" class="mt-1 w-full p-2 border rounded-md">
+                <option value="2">二进制</option>
+                <option value="8">八进制</option>
+                <option value="10">十进制</option>
+                <option value="16">十六进制</option>
+            </select>
+        </div>
+        
+        <button id="convertButton" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">转换</button>
+        
+        <div class="mt-6">
+            <label class="block text-sm font-medium text-gray-600">结果</label>
+            <textarea id="outputText" rows="2" class="mt-1 w-full p-2 border rounded-md bg-gray-50" readonly></textarea>
+        </div>
+        
+        <div class="flex justify-center space-x-4 mt-4">
+            <button id="copyButton" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition hidden">复制结果</button>
+        </div>
+    </div>
+
+    <script>
+        const inputValue = document.getElementById('inputValue');
+        const fromBase = document.getElementById('fromBase');
+        const toBase = document.getElementById('toBase');
+        const convertButton = document.getElementById('convertButton');
+        const outputText = document.getElementById('outputText');
+        const copyButton = document.getElementById('copyButton');
+
+        convertButton.addEventListener('click', () => {
+            try {
+                const value = parseInt(inputValue.value, parseInt(fromBase.value));
+                outputText.value = value.toString(parseInt(toBase.value));
+                copyButton.classList.remove('hidden');
+            } catch (e) {
+                outputText.value = '无效输入';
+            }
+        });
+
+        copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(outputText.value);
+            alert('已复制');
+        });
+    </script>
+</body>
+</html>
