@@ -12,393 +12,720 @@
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+            min-height: 100vh;
+        }
+       
+        .glass {
+            background: rgba(255, 255, 255, 0.20);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+       
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+       
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+       
+        .progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            width: 0%;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
-<body class="bg-transparent min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white bg-opacity-60 rounded-lg shadow-lg p-6 max-w-2xl w-full backdrop-blur-sm">
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">AES-256 + 日文Base 加解密工具</h1>
-        
-        <!-- 密钥勾选框 -->
-        <div class="mb-4">
-            <label class="inline-flex items-center">
-                <input id="useCustomKey" type="checkbox" class="form-checkbox h-5 w-5 text-blue-600">
-                <span class="ml-2 text-sm font-medium text-gray-600">启用自定义密钥</span>
-            </label>
+<body class="flex items-center justify-center p-4">
+    <div class="glass rounded-xl shadow-2xl p-6 max-w-2xl w-full relative">
+        <!-- 加载动画 -->
+        <div id="loadingSpinner" class="loading">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-        
-        <!-- 密钥输入框 -->
-        <div id="keyInputContainer" class="mb-6 hidden">
-            <label id="keyLabel" class="block text-sm font-medium text-gray-600">输入密钥（长度不足32字节将用‘0’补齐）</label>
-            <input id="keyInput" type="text" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500" placeholder="输入自定义密钥">
-            <p id="keyInfo" class="text-sm text-gray-500 mt-1"></p>
+       
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">AES-256 + 日文Base 加解密工具（增强版）</h1>
+        <p class="text-center text-gray-600 text-sm mb-6"></p>
+       
+        <!-- 模式指示器 -->
+        <div class="mb-6 text-center">
+            <span id="modeIndicator" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                <span class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+                <span id="modeText">当前模式：加密</span>
+            </span>
         </div>
-        
-        <!-- 输入框 -->
+       
+        <!-- 密钥设置区域 -->
+        <div class="mb-6 bg-gray-50 rounded-lg p-4 border">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-700">密钥设置</h3>
+                <button type="button" id="toggleAdvanced" class="text-sm text-blue-600 hover:text-blue-800">
+                    显示高级选项
+                </button>
+            </div>
+           
+            <!-- 基本密钥选项 -->
+            <div class="mb-4">
+                <label class="inline-flex items-center">
+                    <input id="useCustomKey" type="checkbox" class="form-checkbox h-5 w-5 text-blue-600">
+                    <span class="ml-2 text-sm font-medium text-gray-600">启用自定义密钥</span>
+                </label>
+                <p class="text-xs text-gray-500 ml-7 mt-1">不启用则使用默认密钥</p>
+            </div>
+           
+            <!-- 密钥输入框 -->
+            <div id="keyInputContainer" class="mb-4 hidden">
+                <label class="block text-sm font-medium text-gray-600 mb-1">输入密钥/密码</label>
+                <div class="relative">
+                    <input id="keyInput" type="password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="建议12位以上，含大小写+数字+符号">
+                    <button type="button" id="toggleKeyVisibility" class="absolute right-3 top-3 text-gray-500 hover:text-gray-700">
+                        👁️
+                    </button>
+                </div>
+                <div class="flex items-center mt-2">
+                    <div class="progress-bar flex-1">
+                        <div id="keyStrengthBar" class="progress-fill"></div>
+                    </div>
+                    <span id="keyStrengthText" class="ml-2 text-xs text-gray-500">密钥强度</span>
+                </div>
+            </div>
+           
+            <!-- 高级选项 -->
+            <div id="advancedOptions" class="hidden space-y-4 mt-4 pt-4 border-t">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">盐值（Salt，可选十六进制）</label>
+                    <input id="saltInput" type="text" class="w-full p-2 border rounded-md"
+                           placeholder="留空自动生成随机盐值">
+                    <p class="text-xs text-gray-500 mt-1">自定义盐值需在解密时手动输入相同值</p>
+                </div>
+               
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">迭代次数</label>
+                    <input id="iterationsInput" type="number" value="50000" min="1000" max="200000"
+                           class="w-full p-2 border rounded-md">
+                    <p class="text-xs text-gray-500 mt-1">默认50000，平衡安全与性能</p>
+                </div>
+            </div>
+           
+            <p id="keyInfo" class="text-sm text-gray-500 mt-2"></p>
+        </div>
+       
+        <!-- 输入区域 -->
         <div class="mb-6">
-            <label id="inputLabel" class="block text-sm font-medium text-gray-600">输入明文</label>
-            <textarea id="inputText" rows="4" class="mt-1 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500" required placeholder="加密请输入明文，解密请输入日文密文（仅含平假名、片假名和‘ン’）"></textarea>
+            <div class="flex justify-between items-center mb-2">
+                <label id="inputLabel" class="block text-sm font-medium text-gray-600">输入明文</label>
+                <span id="charCount" class="text-sm text-gray-500">0 字符</span>
+            </div>
+            <textarea id="inputText" rows="5"
+                      class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                      placeholder="加密请输入明文，解密请输入日文密文（仅含平假名、片假名和'ン'）"
+                      required></textarea>
+            <div class="mt-2">
+                <label class="bg-gray-200 px-4 py-2 rounded cursor-pointer hover:bg-gray-300 inline-block">
+                    📁 导入文件 <input type="file" id="importFile" class="hidden" accept=".txt">
+                </label>
+            </div>
+            <p id="inputInfo" class="text-sm text-gray-500 mt-1"></p>
         </div>
-        
-        <!-- 选择按钮 -->
-        <div class="flex justify-center space-x-4 mb-6">
-            <button id="encryptButton" class="bg-blue-700 text-white py-2 px-4 rounded-md hover:bg-blue-800 transition">加密</button>
-            <button id="decryptButton" class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">解密</button>
-            <button id="clearButton" class="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition">清空</button>
+       
+        <!-- 操作按钮 -->
+        <div class="flex flex-wrap justify-center gap-3 mb-6">
+            <button id="encryptButton" class="flex-1 min-w-[120px] bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-all font-medium flex items-center justify-center">
+                <span>🔒</span>
+                <span class="ml-2">加密</span>
+            </button>
+            <button id="decryptButton" class="flex-1 min-w-[120px] bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-all font-medium flex items-center justify-center">
+                <span>🔓</span>
+                <span class="ml-2">解密</span>
+            </button>
+            <button id="clearButton" class="flex-1 min-w-[120px] bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition-all font-medium flex items-center justify-center">
+                <span>🗑️</span>
+                <span class="ml-2">清空</span>
+            </button>
         </div>
-        
-        <!-- 结果框 -->
+       
+        <!-- 结果区域 -->
         <div class="mb-6">
-            <label id="outputLabel" class="block text-sm font-medium text-gray-600">密文结果</label>
-            <textarea id="outputText" rows="4" class="mt-1 w-full p-2 border rounded-md bg-gray-50" readonly placeholder="加密或解密结果将显示在这里"></textarea>
-            <p id="outputInfo" class="text-sm text-gray-500 mt-1"></p>
+            <div class="flex justify-between items-center mb-2">
+                <label id="outputLabel" class="block text-sm font-medium text-gray-600">密文结果</label>
+                <button id="copyAllButton" class="text-sm text-blue-600 hover:text-blue-800 hidden">
+                    复制全部
+                </button>
+            </div>
+            <textarea id="outputText" rows="5"
+                      class="w-full p-4 border rounded-lg bg-gray-50 font-mono text-base"
+                      readonly placeholder="加密或解密结果将显示在这里"></textarea>
+            <div id="outputInfo" class="mt-3 space-y-2">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">操作状态：</span>
+                    <span id="operationStatus" class="text-gray-800">就绪</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">数据大小：</span>
+                    <span id="dataSize" class="text-gray-800">-</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">处理时间：</span>
+                    <span id="processingTime" class="text-gray-800">-</span>
+                </div>
+            </div>
         </div>
-        
-        <!-- 复制和下载按钮 -->
-        <div class="flex justify-center space-x-4">
-            <button id="copyButton" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition hidden">复制结果</button>
-            <button id="downloadButton" class="bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition hidden">下载结果</button>
+       
+        <!-- 操作按钮组 -->
+        <div class="flex flex-wrap justify-center gap-3">
+            <button id="copyButton" class="flex-1 min-w-[140px] bg-emerald-500 text-white py-3 px-4 rounded-lg hover:bg-emerald-600 transition-all hidden">
+                📋 复制结果
+            </button>
+            <button id="downloadButton" class="flex-1 min-w-[140px] bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-all hidden">
+                ⬇️ 下载文件
+            </button>
+            <button id="showDetailsButton" class="flex-1 min-w-[140px] bg-amber-500 text-white py-3 px-4 rounded-lg hover:bg-amber-600 transition-all hidden">
+                🔍 查看详情
+            </button>
+        </div>
+       
+        <!-- 详情模态框 -->
+        <div id="detailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="glass rounded-xl p-6 max-w-lg w-full mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">加密详情</h3>
+                    <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                        ✕
+                    </button>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <span class="text-sm text-gray-600">算法：</span>
+                        <span class="text-sm font-mono">AES-256-CBC + HMAC-SHA256</span>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">版本：</span>
+                        <span id="modalVersion" class="text-sm font-mono">1</span>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">迭代次数：</span>
+                        <span id="modalIterations" class="text-sm font-mono">-</span>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">IV：</span>
+                        <span id="modalIV" class="text-sm font-mono break-all">-</span>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">盐值：</span>
+                        <span id="modalSalt" class="text-sm font-mono break-all">-</span>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">HMAC：</span>
+                        <span id="modalHmac" class="text-sm font-mono break-all">-</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // 默认AES-256密钥（32字节，256位）
-        const defaultKey = 'z7jgX9RwezqpY588dRphLRMTE3ie2uTX';
-        // 固定IV（16字节，128位）
-        const fixedIV = 'z7jgX9RwezqpY588';
+        const VERSION = 1;
+        const DEFAULT_ITERATIONS = 50000;
 
-        // 自定义Base64字母表：64个唯一日文字符
         const customAlphabet = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわゐゑをんアイウエオカキクケコサシスセソタ';
-        const paddingChar = 'ン'; // 自定义填充字符
+        const paddingChar = 'ン';
 
-        // 验证字母表长度
-        if (customAlphabet.length !== 64) {
-            throw new Error('字母表长度必须为64，当前为' + customAlphabet.length);
-        }
+        if (customAlphabet.length !== 64) throw new Error('字母表必须64位');
 
-        // 构建编码/解码映射
         const encodeMap = new Map();
         const decodeMap = new Map();
-        for (let i = 0; i < customAlphabet.length; i++) {
+        for (let i = 0; i < 64; i++) {
             encodeMap.set(i, customAlphabet[i]);
             decodeMap.set(customAlphabet[i], i);
         }
 
-        // 清理输入密文，移除非法字符
-        function cleanCiphertext(input) {
-            const validChars = new Set([...customAlphabet, paddingChar]);
-            let cleaned = '';
-            let invalidChars = new Set();
-            for (let char of input) {
-                if (validChars.has(char)) {
-                    cleaned += char;
-                } else {
-                    invalidChars.add(char);
-                }
-            }
-            return { cleaned, invalidChars };
-        }
-
-        // 自定义Base64编码函数（3字节 -> 4字符）
         function customBaseEncode(bytes) {
-            let output = '';
+            let out = '';
             for (let i = 0; i < bytes.length; i += 3) {
                 const b1 = bytes[i];
                 const b2 = i + 1 < bytes.length ? bytes[i + 1] : 0;
                 const b3 = i + 2 < bytes.length ? bytes[i + 2] : 0;
-
-                const enc1 = b1 >> 2;
-                const enc2 = ((b1 & 3) << 4) | (b2 >> 4);
-                const enc3 = ((b2 & 15) << 2) | (b3 >> 6);
-                const enc4 = b3 & 63;
-
-                if (!encodeMap.has(enc1) || !encodeMap.has(enc2) || !encodeMap.has(enc3) || !encodeMap.has(enc4)) {
-                    throw new Error(`编码映射失败，无效索引：${enc1},${enc2},${enc3},${enc4}`);
-                }
-
-                if (i + 1 >= bytes.length) { // 只剩一个字节
-                    output += encodeMap.get(enc1) + encodeMap.get(enc2) + paddingChar + paddingChar;
-                } else if (i + 2 >= bytes.length) { // 只剩两个字节
-                    output += encodeMap.get(enc1) + encodeMap.get(enc2) + encodeMap.get(enc3) + paddingChar;
-                } else {
-                    output += encodeMap.get(enc1) + encodeMap.get(enc2) + encodeMap.get(enc3) + encodeMap.get(enc4);
-                }
+                const e1 = b1 >> 2;
+                const e2 = ((b1 & 3) << 4) | (b2 >> 4);
+                const e3 = ((b2 & 15) << 2) | (b3 >> 6);
+                const e4 = b3 & 63;
+                if (i + 1 >= bytes.length) out += encodeMap.get(e1) + encodeMap.get(e2) + paddingChar + paddingChar;
+                else if (i + 2 >= bytes.length) out += encodeMap.get(e1) + encodeMap.get(e2) + encodeMap.get(e3) + paddingChar;
+                else out += encodeMap.get(e1) + encodeMap.get(e2) + encodeMap.get(e3) + encodeMap.get(e4);
             }
-            return output;
+            return out;
         }
 
-        // 自定义Base64解码函数（4字符 -> 3字节）
-        function customBaseDecode(input) {
-            if (!input || input.length % 4 !== 0) {
-                throw new Error(`密文长度无效，必须是4的倍数（当前长度：${input.length}字符）`);
-            }
-            for (let i = 0; i < input.length; i++) {
-                if (input[i] !== paddingChar && !decodeMap.has(input[i])) {
-                    throw new Error(`密文中包含非法字符：${input[i]}`);
+        function customBaseDecode(str) {
+            if (str.length % 4 !== 0) throw new Error('密文长度必须为4的倍数');
+
+            let padding = 0;
+            if (str.endsWith(paddingChar + paddingChar)) padding = 2;
+            else if (str.endsWith(paddingChar)) padding = 1;
+
+            const outLen = (str.length / 4) * 3 - padding;
+            const out = new Uint8Array(outLen);
+
+            let outIdx = 0;
+            for (let i = 0; i < str.length; i += 4) {
+                const c1 = decodeMap.get(str[i]);
+                const c2 = decodeMap.get(str[i+1]);
+                const c3 = str[i+2] === paddingChar ? 0 : decodeMap.get(str[i+2]);
+                const c4 = str[i+3] === paddingChar ? 0 : decodeMap.get(str[i+3]);
+
+                if (c1 === undefined || c2 === undefined ||
+                    (str[i+2] !== paddingChar && c3 === undefined) ||
+                    (str[i+3] !== paddingChar && c4 === undefined)) {
+                    throw new Error(`密文包含非法字符或损坏（位置约${i+1}）`);
                 }
-            }
-            let bytes = [];
-            for (let i = 0; i < input.length; i += 4) {
-                const c1 = decodeMap.get(input[i]);
-                const c2 = decodeMap.get(input[i + 1]);
-                const c3 = input[i + 2] === paddingChar ? 0 : decodeMap.get(input[i + 2]);
-                const c4 = input[i + 3] === paddingChar ? 0 : decodeMap.get(input[i + 3]);
 
-                bytes.push((c1 << 2) | (c2 >> 4));
-                if (input[i + 2] !== paddingChar) bytes.push(((c2 & 15) << 4) | (c3 >> 2));
-                if (input[i + 3] !== paddingChar) bytes.push(((c3 & 3) << 6) | c4);
+                if (outIdx < outLen) out[outIdx++] = (c1 << 2) | (c2 >> 4);
+                if (outIdx < outLen) out[outIdx++] = ((c2 & 15) << 4) | (c3 >> 2);
+                if (outIdx < outLen) out[outIdx++] = ((c3 & 3) << 6) | c4;
             }
-            return new Uint8Array(bytes);
+            return out;
         }
 
-        // 处理密钥长度
-        function processKey(inputKey) {
-            if (!inputKey) return defaultKey; // 空密钥使用默认密钥
-            const byteLength = new TextEncoder().encode(inputKey).length;
-            if (byteLength === 32) {
-                return inputKey; // 密钥长度正好32字节
-            } else if (byteLength < 32) {
-                return inputKey.padEnd(32, '0'); // 不足32字节，用'0'补齐
-            } else {
-                return inputKey.slice(0, 32); // 超过32字节，截取前32字节
+        function wordArrayToUint8Array(wordArray) {
+            const bytes = new Uint8Array(wordArray.sigBytes);
+            let offset = 0;
+            for (let i = 0; i < wordArray.words.length; i++) {
+                const word = wordArray.words[i];
+                if (offset < wordArray.sigBytes) bytes[offset++] = (word >> 24) & 0xff;
+                if (offset < wordArray.sigBytes) bytes[offset++] = (word >> 16) & 0xff;
+                if (offset < wordArray.sigBytes) bytes[offset++] = (word >> 8) & 0xff;
+                if (offset < wordArray.sigBytes) bytes[offset++] = word & 0xff;
             }
+            return bytes;
         }
 
-        // 按钮状态管理
-        const encryptButton = document.getElementById('encryptButton');
-        const decryptButton = document.getElementById('decryptButton');
-        const clearButton = document.getElementById('clearButton');
-        const useCustomKey = document.getElementById('useCustomKey');
-        const keyInputContainer = document.getElementById('keyInputContainer');
-        const inputLabel = document.getElementById('inputLabel');
-        const outputLabel = document.getElementById('outputLabel');
-        const keyInput = document.getElementById('keyInput');
-        const keyInfo = document.getElementById('keyInfo');
-        const inputText = document.getElementById('inputText');
-        const outputText = document.getElementById('outputText');
-        const outputInfo = document.getElementById('outputInfo');
-        const copyButton = document.getElementById('copyButton');
-        const downloadButton = document.getElementById('downloadButton');
-        let mode = 'encrypt'; // 默认模式为加密
-        let isProcessing = false; // 防止多次点击
-
-        // 切换密钥输入框显示状态
-        function toggleKeyInput() {
-            keyInputContainer.classList.toggle('hidden', !useCustomKey.checked);
-            updateKeyInfo();
+        function deriveKeys(password, salt, iterations) {
+            const master = CryptoJS.PBKDF2(password, salt, {
+                keySize: 256 / 32,
+                iterations: iterations,
+                hasher: CryptoJS.algo.SHA256
+            });
+            const aesKeyStr = CryptoJS.HmacSHA256("AES", master).toString().slice(0, 64);
+            const hmacKeyStr = CryptoJS.HmacSHA256("HMAC", master).toString().slice(0, 64);
+            const aesKey = CryptoJS.enc.Hex.parse(aesKeyStr);
+            const hmacKey = CryptoJS.enc.Hex.parse(hmacKeyStr);
+            return { aesKey, hmacKey };
         }
 
-        // 更新密钥信息
-        function updateKeyInfo() {
-            if (!useCustomKey.checked) {
-                keyInfo.textContent = `使用默认密钥（32字节）`;
-            } else {
-                const key = keyInput.value.trim();
-                const processedKey = processKey(key);
-                const byteLength = key ? new TextEncoder().encode(key).length : 0;
-                keyInfo.textContent = `当前密钥长度：${new TextEncoder().encode(processedKey).length}字节${key && key !== processedKey ? '（已补齐或截取）' : ''}`;
+        function evaluateKeyStrength(pass) {
+            if (!pass) return { percent: 0, text: '无', color: 'text-red-600' };
+            let score = 0;
+            if (pass.length >= 12) score += 25;
+            if (pass.length >= 20) score += 15;
+            if (/[a-z]/.test(pass)) score += 15;
+            if (/[A-Z]/.test(pass)) score += 15;
+            if (/[0-9]/.test(pass)) score += 15;
+            if (/[^a-zA-Z0-9]/.test(pass)) score += 15;
+            const texts = ['极弱', '弱', '中等', '较强', '强', '极强'];
+            const colors = ['text-red-600', 'text-orange-600', 'text-yellow-600', 'text-green-500', 'text-green-600', 'text-green-700'];
+            const idx = Math.min(5, Math.floor(score / 20));
+            return { percent: Math.max(10, score), text: texts[idx], color: colors[idx] };
+        }
+
+        class App {
+            constructor() {
+                this.mode = 'encrypt';
+                this.isProcessing = false;
+                this.lastResult = null;
+                this.initElements();
+                this.bindEvents();
+                this.updateUI();
             }
-        }
 
-        // 初始化密钥信息和输入框状态
-        toggleKeyInput();
-        useCustomKey.addEventListener('change', toggleKeyInput);
-        keyInput.addEventListener('input', updateKeyInfo);
+            initElements() {
+                this.el = {
+                    useCustomKey: document.getElementById('useCustomKey'),
+                    keyInputContainer: document.getElementById('keyInputContainer'),
+                    keyInput: document.getElementById('keyInput'),
+                    toggleKeyVisibility: document.getElementById('toggleKeyVisibility'),
+                    keyStrengthBar: document.getElementById('keyStrengthBar'),
+                    keyStrengthText: document.getElementById('keyStrengthText'),
+                    keyInfo: document.getElementById('keyInfo'),
 
-        // 更新标签和按钮样式
-        function updateUI() {
-            inputLabel.textContent = mode === 'encrypt' ? '输入明文' : '输入密文';
-            outputLabel.textContent = mode === 'encrypt' ? '密文结果' : '明文结果';
-            encryptButton.classList.toggle('bg-blue-700', mode === 'encrypt');
-            encryptButton.classList.toggle('bg-blue-500', mode !== 'encrypt');
-            decryptButton.classList.toggle('bg-blue-700', mode === 'decrypt');
-            decryptButton.classList.toggle('bg-blue-500', mode !== 'decrypt');
-            encryptButton.disabled = isProcessing;
-            decryptButton.disabled = isProcessing;
-            clearButton.disabled = isProcessing;
-            outputInfo.textContent = '';
-        }
+                    inputText: document.getElementById('inputText'),
+                    inputLabel: document.getElementById('inputLabel'),
+                    charCount: document.getElementById('charCount'),
+                    inputInfo: document.getElementById('inputInfo'),
+                    importFile: document.getElementById('importFile'),
 
-        // 初始化UI
-        updateUI();
+                    outputText: document.getElementById('outputText'),
+                    outputLabel: document.getElementById('outputLabel'),
 
-        // 清空按钮
-        clearButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            useCustomKey.checked = false;
-            keyInput.value = '';
-            keyInputContainer.classList.add('hidden');
-            inputText.value = '';
-            outputText.value = '';
-            outputInfo.textContent = '';
-            copyButton.classList.add('hidden');
-            downloadButton.classList.add('hidden');
-            updateKeyInfo();
-            updateUI();
-        });
+                    encryptButton: document.getElementById('encryptButton'),
+                    decryptButton: document.getElementById('decryptButton'),
+                    clearButton: document.getElementById('clearButton'),
+                    copyButton: document.getElementById('copyButton'),
+                    copyAllButton: document.getElementById('copyAllButton'),
+                    downloadButton: document.getElementById('downloadButton'),
+                    showDetailsButton: document.getElementById('showDetailsButton'),
 
-        // 加密按钮点击
-        encryptButton.addEventListener('click', async function(e) {
-            e.preventDefault();
-            if (isProcessing) return;
-            isProcessing = true;
-            mode = 'encrypt';
-            updateUI();
-            outputText.value = ''; // 清空结果
-            outputInfo.textContent = '';
-            const input = inputText.value.trim();
-            const key = useCustomKey.checked ? processKey(keyInput.value.trim()) : defaultKey;
-            if (!input) {
-                outputText.value = '加密失败：请输入明文';
-                isProcessing = false;
-                updateUI();
-                return;
+                    modeText: document.getElementById('modeText'),
+                    loadingSpinner: document.getElementById('loadingSpinner'),
+                    operationStatus: document.getElementById('operationStatus'),
+                    dataSize: document.getElementById('dataSize'),
+                    processingTime: document.getElementById('processingTime'),
+
+                    toggleAdvanced: document.getElementById('toggleAdvanced'),
+                    advancedOptions: document.getElementById('advancedOptions'),
+                    saltInput: document.getElementById('saltInput'),
+                    iterationsInput: document.getElementById('iterationsInput'),
+
+                    detailsModal: document.getElementById('detailsModal'),
+                    closeModal: document.getElementById('closeModal'),
+                    modalVersion: document.getElementById('modalVersion'),
+                    modalIterations: document.getElementById('modalIterations'),
+                    modalIV: document.getElementById('modalIV'),
+                    modalSalt: document.getElementById('modalSalt'),
+                    modalHmac: document.getElementById('modalHmac')
+                };
             }
-            try {
-                // 使用固定IV
-                const iv = CryptoJS.enc.Utf8.parse(fixedIV);
-                // 执行AES-256-CBC加密
-                const encrypted = CryptoJS.AES.encrypt(input, key, {
-                    iv: iv,
-                    mode: CryptoJS.mode.CBC,
-                    padding: CryptoJS.pad.Pkcs7
-                });
-                // 获取密文Base64字符串
-                const base64Ciphertext = encrypted.toString();
-                // 转换为字节数组（IV + 密文）
-                const ciphertextBytes = CryptoJS.enc.Base64.parse(base64Ciphertext);
-                const ivBytes = CryptoJS.enc.Utf8.parse(fixedIV);
-                const combined = new Uint8Array(ivBytes.sigBytes + ciphertextBytes.sigBytes);
-                for (let i = 0; i < ivBytes.sigBytes; i++) {
-                    combined[i] = (ivBytes.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+
+            bindEvents() {
+                this.el.useCustomKey.addEventListener('change', () => this.toggleKeyInput());
+                this.el.keyInput.addEventListener('input', () => this.updateKeyStrength());
+                this.el.toggleKeyVisibility.addEventListener('click', () => this.toggleKeyVisibility());
+                this.el.inputText.addEventListener('input', () => this.updateCharCount());
+                this.el.importFile.addEventListener('change', (e) => this.handleFileImport(e));
+
+                this.el.encryptButton.addEventListener('click', () => this.handleEncrypt());
+                this.el.decryptButton.addEventListener('click', () => this.handleDecrypt());
+                this.el.clearButton.addEventListener('click', () => this.handleClear());
+
+                this.el.copyButton.addEventListener('click', () => this.copyResult());
+                this.el.copyAllButton.addEventListener('click', () => this.copyAll());
+                this.el.downloadButton.addEventListener('click', () => this.downloadResult());
+                this.el.showDetailsButton.addEventListener('click', () => this.showDetails());
+
+                this.el.toggleAdvanced.addEventListener('click', () => this.toggleAdvanced());
+                this.el.closeModal.addEventListener('click', () => this.hideDetails());
+                this.el.detailsModal.addEventListener('click', (e) => { if (e.target === this.el.detailsModal) this.hideDetails(); });
+            }
+
+            toggleKeyInput() {
+                this.el.keyInputContainer.classList.toggle('hidden', !this.el.useCustomKey.checked);
+                this.updateKeyStrength();
+            }
+
+            toggleKeyVisibility() {
+                const type = this.el.keyInput.type === 'password' ? 'text' : 'password';
+                this.el.keyInput.type = type;
+                this.el.toggleKeyVisibility.textContent = type === 'password' ? '👁️' : '🙈';
+            }
+
+            updateKeyStrength() {
+                const pass = this.el.useCustomKey.checked ? this.el.keyInput.value : '';
+                const strength = evaluateKeyStrength(pass);
+                this.el.keyStrengthBar.style.width = strength.percent + '%';
+                this.el.keyStrengthText.textContent = `强度：${strength.text}`;
+                this.el.keyStrengthText.className = `ml-2 text-xs font-medium ${strength.color}`;
+                this.el.keyInfo.textContent = this.el.useCustomKey.checked ? '' : '使用默认密钥 + PBKDF2 + HMAC 增强';
+            }
+
+            updateCharCount() {
+                const len = this.el.inputText.value.length;
+                this.el.charCount.textContent = `${len} 字符`;
+            }
+
+            handleFileImport(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => { this.el.inputText.value = ev.target.result; this.updateCharCount(); };
+                reader.readAsText(file);
+            }
+
+            toggleAdvanced() {
+                const hidden = this.el.advancedOptions.classList.toggle('hidden');
+                this.el.toggleAdvanced.textContent = hidden ? '显示高级选项' : '隐藏高级选项';
+            }
+
+            showLoading() {
+                this.el.loadingSpinner.style.display = 'block';
+                this.isProcessing = true;
+                this.el.operationStatus.textContent = '处理中...';
+                this.updateUI();
+            }
+
+            hideLoading() {
+                this.el.loadingSpinner.style.display = 'none';
+                this.isProcessing = false;
+                this.updateUI();
+            }
+
+            updateUI() {
+                this.el.modeText.textContent = this.mode === 'encrypt' ? '当前模式：加密' : '当前模式：解密';
+                this.el.inputLabel.textContent = this.mode === 'encrypt' ? '输入明文' : '输入密文';
+                this.el.outputLabel.textContent = this.mode === 'encrypt' ? '密文结果' : '明文结果';
+
+                [this.el.encryptButton, this.el.decryptButton, this.el.clearButton].forEach(b => b.disabled = this.isProcessing);
+            }
+
+            getPassword() {
+                if (this.el.useCustomKey.checked) {
+                    if (!this.el.keyInput.value.trim()) {
+                        throw new Error('已启用自定义密钥但未输入密码');
+                    }
+                    return this.el.keyInput.value.trim();
                 }
-                for (let i = 0; i < ciphertextBytes.sigBytes; i++) {
-                    combined[ivBytes.sigBytes + i] = (ciphertextBytes.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+                return 'z7jgX9RwezqpY588dRphLRMTE3ie2uTX';
+            }
+
+            getSalt() {
+                const val = this.el.saltInput.value.trim();
+                if (val) {
+                    if (!/^[0-9a-fA-F]+$/.test(val) || val.length % 2 !== 0) throw new Error('盐值必须为有效十六进制字符串');
+                    return CryptoJS.enc.Hex.parse(val);
                 }
-                // 验证密文长度
-                if (ciphertextBytes.sigBytes % 16 !== 0) {
-                    throw new Error(`加密生成无效密文长度：${ciphertextBytes.sigBytes}字节，需为16的倍数`);
-                }
-                // 转换为自定义Base64编码
-                const customCiphertext = customBaseEncode(combined);
-                // 显示结果
-                outputText.value = customCiphertext;
-                outputInfo.textContent = `密文长度：${customCiphertext.length}字符（${combined.length}字节，IV 16字节 + 密文 ${ciphertextBytes.sigBytes}字节）`;
-                copyButton.classList.remove('hidden');
-                downloadButton.classList.remove('hidden');
-                // 配置复制按钮
-                copyButton.onclick = () => {
-                    navigator.clipboard.writeText(customCiphertext).then(() => {
-                        alert('已复制到剪贴板');
-                    }).catch(err => {
-                        alert('复制失败：' + err);
+                return CryptoJS.lib.WordArray.random(16);
+            }
+
+            getIterations() {
+                return parseInt(this.el.iterationsInput.value) || DEFAULT_ITERATIONS;
+            }
+
+            async handleEncrypt() {
+                if (this.isProcessing) return;
+                this.mode = 'encrypt';
+                this.updateUI();
+
+                const text = this.el.inputText.value.trim();
+                if (!text) return this.showMessage('请输入明文', 'error');
+
+                const startTime = performance.now();
+
+                try {
+                    this.showLoading();
+
+                    const password = this.getPassword();
+                    const salt = this.getSalt();
+                    const iterations = this.getIterations();
+                    const iv = CryptoJS.lib.WordArray.random(16);
+
+                    const { aesKey, hmacKey } = deriveKeys(password, salt, iterations);
+
+                    const encrypted = CryptoJS.AES.encrypt(text, aesKey, {
+                        iv: iv,
+                        mode: CryptoJS.mode.CBC,
+                        padding: CryptoJS.pad.Pkcs7
                     });
-                };
-                // 配置下载按钮
-                downloadButton.onclick = () => {
-                    const blob = new Blob([customCiphertext], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'encrypted.txt';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                };
-            } catch (error) {
-                outputText.value = '加密失败：' + error.message;
-                outputInfo.textContent = '';
-                copyButton.classList.add('hidden');
-                downloadButton.classList.add('hidden');
-            }
-            isProcessing = false;
-            updateUI();
-        });
 
-        // 解密按钮点击
-        decryptButton.addEventListener('click', async function(e) {
-            e.preventDefault();
-            if (isProcessing) return;
-            isProcessing = true;
-            mode = 'decrypt';
-            updateUI();
-            outputText.value = ''; // 清空结果
-            outputInfo.textContent = '';
-            let input = inputText.value.trim();
-            const key = useCustomKey.checked ? processKey(keyInput.value.trim()) : defaultKey;
-            let decodedBytes = null;
-            try {
-                // 清理输入密文
-                const { cleaned, invalidChars } = cleanCiphertext(input);
-                if (invalidChars.size > 0) {
-                    alert(`警告：已移除密文中的非法字符：${[...invalidChars].join(', ')}`);
-                    inputText.value = cleaned; // 更新输入框
+                    const header = new Uint8Array(1 + 4 + 16 + 16);
+                    header[0] = VERSION;
+                    new DataView(header.buffer, 1, 4).setUint32(0, iterations, false);
+                    header.set(wordArrayToUint8Array(salt), 5);
+                    header.set(wordArrayToUint8Array(iv), 21);
+
+                    const ciphertextBytes = wordArrayToUint8Array(encrypted.ciphertext);
+                    const macBytes = new Uint8Array(header.length + ciphertextBytes.length);
+                    macBytes.set(header, 0);
+                    macBytes.set(ciphertextBytes, header.length);
+
+                    const hmac = CryptoJS.HmacSHA256(CryptoJS.lib.WordArray.create(macBytes), hmacKey);
+
+                    const hmacBytes = wordArrayToUint8Array(hmac);
+                    const combined = new Uint8Array(header.length + ciphertextBytes.length + 32);
+                    combined.set(header, 0);
+                    combined.set(ciphertextBytes, header.length);
+                    combined.set(hmacBytes, header.length + ciphertextBytes.length);
+
+                    const cipher = customBaseEncode(combined);
+
+                    this.el.outputText.value = cipher;
+                    this.lastResult = {
+                        cipher,
+                        iv: iv.toString(CryptoJS.enc.Hex),
+                        salt: salt.toString(CryptoJS.enc.Hex),
+                        iterations,
+                        hmac: hmac.toString(CryptoJS.enc.Hex),
+                        version: VERSION
+                    };
+
+                    const elapsed = Math.round(performance.now() - startTime);
+                    this.el.dataSize.textContent = `${combined.length} 字节`;
+                    this.el.processingTime.textContent = `${elapsed} ms`;
+                    this.el.operationStatus.textContent = '加密成功';
+                    this.el.operationStatus.className = 'text-green-600 font-medium';
+
+                    [this.el.copyButton, this.el.downloadButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.remove('hidden'));
+
+                    this.showMessage('加密成功', 'success');
+                } catch (e) {
+                    this.showMessage('加密失败：' + e.message, 'error');
+                } finally {
+                    this.hideLoading();
                 }
-                if (!cleaned) {
-                    throw new Error('密文为空，请输入有效的日文密文');
-                }
-                input = cleaned;
-                // 自定义Base64解码
-                decodedBytes = customBaseDecode(input);
-                // 验证总长度（至少16字节IV）
-                if (decodedBytes.length < 16) {
-                    throw new Error(`密文太短，无法提取IV（当前：${decodedBytes.length}字节，需至少16字节）`);
-                }
-                // 提取IV（前16字节）
-                const ivBytes = decodedBytes.slice(0, 16);
-                const iv = CryptoJS.lib.WordArray.create(ivBytes);
-                // 提取密文（剩余部分）
-                const ciphertextBytes = decodedBytes.slice(16);
-                if (ciphertextBytes.length === 0) {
-                    throw new Error('密文内容为空，无法解密');
-                }
-                // 验证密文长度
-                if (ciphertextBytes.length % 16 !== 0) {
-                    throw new Error(`密文长度无效：${ciphertextBytes.length}字节，必须是16的倍数`);
-                }
-                const ciphertextWordArray = CryptoJS.lib.WordArray.create(ciphertextBytes);
-                const base64Ciphertext = CryptoJS.enc.Base64.stringify(ciphertextWordArray);
-                // 执行AES-256-CBC解密
-                const decrypted = CryptoJS.AES.decrypt(base64Ciphertext, key, {
-                    iv: iv,
-                    mode: CryptoJS.mode.CBC,
-                    padding: CryptoJS.pad.Pkcs7
-                });
-                const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
-                if (!plaintext) {
-                    throw new Error('解密失败，可能是密文格式错误或密钥不匹配');
-                }
-                // 显示结果
-                outputText.value = plaintext;
-                outputInfo.textContent = `明文长度：${plaintext.length}字符`;
-                copyButton.classList.remove('hidden');
-                downloadButton.classList.remove('hidden');
-                // 配置复制按钮
-                copyButton.onclick = () => {
-                    navigator.clipboard.writeText(plaintext).then(() => {
-                        alert('已复制到剪贴板');
-                    }).catch(err => {
-                        alert('复制失败：' + err);
-                    });
-                };
-                // 配置下载按钮
-                downloadButton.onclick = () => {
-                    const blob = new Blob([plaintext], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'decrypted.txt';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                };
-            } catch (error) {
-                outputText.value = `解密失败：${error.message}\n请使用本工具重新生成密文，确保密钥和密文匹配`;
-                outputInfo.textContent = `输入密文长度：${input.length}字符（${decodedBytes ? decodedBytes.length : 0}字节，IV ${decodedBytes ? 16 : 0}字节 + 密文 ${decodedBytes ? decodedBytes.length - 16 : 0}字节）`;
-                copyButton.classList.add('hidden');
-                downloadButton.classList.add('hidden');
             }
-            isProcessing = false;
-            updateUI();
-        });
+
+            async handleDecrypt() {
+                if (this.isProcessing) return;
+                this.mode = 'decrypt';
+                this.updateUI();
+
+                let input = this.el.inputText.value.trim();
+                if (!input) return this.showMessage('请输入密文', 'error');
+
+                const startTime = performance.now();
+
+                try {
+                    this.showLoading();
+
+                    const decoded = customBaseDecode(input);
+                    if (decoded.length < 1 + 4 + 16 + 16 + 32 + 16) throw new Error('密文太短或格式错误');
+
+                    let offset = 0;
+                    const version = decoded[offset++];
+                    if (version !== VERSION) throw new Error(`不支持的密文版本：${version}`);
+
+                    const iterArray = decoded.subarray(offset, offset + 4);
+                    const iterations = new DataView(iterArray.buffer, iterArray.byteOffset, 4).getUint32(0, false);
+                    offset += 4;
+
+                    const salt = CryptoJS.lib.WordArray.create(decoded.subarray(offset, offset + 16));
+                    offset += 16;
+                    const iv = CryptoJS.lib.WordArray.create(decoded.subarray(offset, offset + 16));
+                    offset += 16;
+
+                    const password = this.getPassword();
+                    const { aesKey, hmacKey } = deriveKeys(password, salt, iterations);
+
+                    const hmacBytes = decoded.slice(decoded.length - 32);
+                    const hmacReceived = CryptoJS.lib.WordArray.create(hmacBytes);
+
+                    const ciphertextBytes = decoded.subarray(offset, decoded.length - 32);
+                    const ciphertext = CryptoJS.lib.WordArray.create(ciphertextBytes);
+
+                    const header = new Uint8Array(1 + 4 + 16 + 16);
+                    header[0] = version;
+                    header.set(iterArray, 1);
+                    header.set(wordArrayToUint8Array(salt), 5);
+                    header.set(wordArrayToUint8Array(iv), 21);
+
+                    const macBytes = new Uint8Array(header.length + ciphertextBytes.length);
+                    macBytes.set(header, 0);
+                    macBytes.set(ciphertextBytes, header.length);
+
+                    const hmacCalc = CryptoJS.HmacSHA256(CryptoJS.lib.WordArray.create(macBytes), hmacKey);
+
+                    if (hmacCalc.toString(CryptoJS.enc.Hex) !== hmacReceived.toString(CryptoJS.enc.Hex)) {
+                        throw new Error('HMAC校验失败：密文被篡改或密码错误');
+                    }
+
+                    const decrypted = CryptoJS.AES.decrypt({ ciphertext }, aesKey, {
+                        iv: iv,
+                        mode: CryptoJS.mode.CBC,
+                        padding: CryptoJS.pad.Pkcs7
+                    });
+
+                    const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+                    if (!plaintext) throw new Error('解密失败：密码错误或密文损坏');
+
+                    this.el.outputText.value = plaintext;
+                    this.lastResult = {
+                        plaintext,
+                        iv: iv.toString(CryptoJS.enc.Hex),
+                        salt: salt.toString(CryptoJS.enc.Hex),
+                        iterations,
+                        hmac: hmacReceived.toString(CryptoJS.enc.Hex),
+                        version
+                    };
+
+                    const elapsed = Math.round(performance.now() - startTime);
+                    this.el.dataSize.textContent = `${decoded.length} 字节`;
+                    this.el.processingTime.textContent = `${elapsed} ms`;
+                    this.el.operationStatus.textContent = '解密成功';
+                    this.el.operationStatus.className = 'text-green-600 font-medium';
+
+                    [this.el.copyButton, this.el.downloadButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.remove('hidden'));
+
+                    this.showMessage('解密成功', 'success');
+                } catch (e) {
+                    this.showMessage('解密失败：' + e.message, 'error');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            handleClear() {
+                this.el.useCustomKey.checked = false;
+                this.el.keyInput.value = '';
+                this.el.saltInput.value = '';
+                this.el.iterationsInput.value = DEFAULT_ITERATIONS;
+                this.el.inputText.value = '';
+                this.el.outputText.value = '';
+                this.el.charCount.textContent = '0 字符';
+                this.el.dataSize.textContent = '-';
+                this.el.processingTime.textContent = '-';
+                this.el.operationStatus.textContent = '就绪';
+                [this.el.copyButton, this.el.downloadButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.add('hidden'));
+                this.toggleKeyInput();
+                this.el.advancedOptions.classList.add('hidden');
+                this.el.toggleAdvanced.textContent = '显示高级选项';
+                this.showMessage('已清空', 'info');
+            }
+
+            copyResult() {
+                navigator.clipboard.writeText(this.el.outputText.value).then(() => this.showMessage('已复制', 'success'));
+            }
+
+            copyAll() {
+                const text = this.mode === 'encrypt' ? `密文：\n${this.el.outputText.value}` : `明文：\n${this.el.outputText.value}`;
+                navigator.clipboard.writeText(text).then(() => this.showMessage('已复制全部', 'success'));
+            }
+
+            downloadResult() {
+                const blob = new Blob([this.el.outputText.value], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = this.mode === 'encrypt' ? 'encrypted.txt' : 'decrypted.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            showDetails() {
+                if (!this.lastResult) return;
+                this.el.modalVersion.textContent = this.lastResult.version;
+                this.el.modalIterations.textContent = this.lastResult.iterations;
+                this.el.modalIV.textContent = this.lastResult.iv;
+                this.el.modalSalt.textContent = this.lastResult.salt;
+                this.el.modalHmac.textContent = this.lastResult.hmac;
+                this.el.detailsModal.classList.remove('hidden');
+            }
+
+            hideDetails() {
+                this.el.detailsModal.classList.add('hidden');
+            }
+
+            showMessage(msg, type = 'info') {
+                const el = document.createElement('div');
+                el.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 text-white font-medium`;
+                el.className += type === 'success' ? ' bg-green-600' : type === 'error' ? ' bg-red-600' : ' bg-blue-600';
+                el.textContent = msg;
+                document.body.appendChild(el);
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transition = 'opacity 0.5s';
+                    setTimeout(() => el.remove(), 500);
+                }, 3000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => new App());
     </script>
 </body>
 </html>
