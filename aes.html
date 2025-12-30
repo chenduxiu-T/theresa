@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AES-256 + 日文Base 加解密工具（增强版）</title>
+    <title>AES-256 + 日文Base 加解密工具</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -137,9 +137,9 @@
                     <label class="block text-sm font-medium text-gray-600 mb-1">输出格式</label>
                     <select id="outputFormat" class="w-full p-2 border rounded-md">
                         <option value="base">日文Base文本（默认）</option>
-                        <option value="binary">二进制.enc文件（适合大文件/图片）</option>
+                        <option value="binary">二进制.enc文件（适合大文件/压缩包）</option>
                     </select>
-                    <p class="text-xs text-gray-500 mt-1">大文件建议用二进制格式</p>
+                    <p class="text-xs text-gray-500 mt-1">压缩包等大文件强烈建议用二进制格式</p>
                 </div>
             </div>
            
@@ -149,15 +149,15 @@
         <!-- 输入区域 -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-2">
-                <label id="inputLabel" class="block text-sm font-medium text-gray-600">输入明文或图片</label>
+                <label id="inputLabel" class="block text-sm font-medium text-gray-600">输入明文或任意文件</label>
                 <span id="charCount" class="text-sm text-gray-500">0 字符</span>
             </div>
             <textarea id="inputText" rows="5"
                       class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                      placeholder="加密请输入明文或导入文件，解密请输入日文密文或导入.enc文件"></textarea>
+                      placeholder="加密请输入明文或导入任意文件，解密请输入日文密文或导入.enc文件"></textarea>
             <div class="mt-2">
                 <label class="bg-gray-200 px-4 py-2 rounded cursor-pointer hover:bg-gray-300 inline-block">
-                    📁 导入文件（支持图片/文本/.enc） <input type="file" id="importFile" class="hidden" accept=".txt,image/*,.enc,*/*">
+                    📁 导入文件（支持文本，文件，图片等） <input type="file" id="importFile" class="hidden" accept="*/*">
                 </label>
             </div>
             <p id="inputInfo" class="text-sm text-gray-500 mt-1"></p>
@@ -217,9 +217,6 @@
             <button id="downloadButton" class="flex-1 min-w-[140px] bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 active:bg-purple-500 focus:bg-purple-500 focus:outline-none transition-all hidden">
                 ⬇️ 下载文件
             </button>
-            <button id="redownloadButton" class="flex-1 min-w-[140px] bg-indigo-500 text-white py-3 px-4 rounded-lg hover:bg-indigo-600 active:bg-indigo-500 focus:bg-indigo-500 focus:outline-none transition-all hidden">
-                🔄 再次下载
-            </button>
             <button id="showDetailsButton" class="flex-1 min-w-[140px] bg-amber-500 text-white py-3 px-4 rounded-lg hover:bg-amber-600 active:bg-amber-500 focus:bg-amber-500 focus:outline-none transition-all hidden">
                 🔍 查看详情
             </button>
@@ -267,6 +264,7 @@
 
     <script>
         const CURRENT_VERSION = 2;
+        const MAGIC_BYTE = 0xE2;
         const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB
         const MAX_ITERATIONS = 200000;
         const MIN_ITERATIONS = 1000;
@@ -349,6 +347,19 @@
             return bytes;
         }
 
+        function uint8ToWordArray(u8) {
+            const words = [];
+            for (let i = 0; i < u8.length; i += 4) {
+                words.push(
+                    ((u8[i] || 0) << 24) |
+                    ((u8[i + 1] || 0) << 16) |
+                    ((u8[i + 2] || 0) << 8) |
+                    (u8[i + 3] || 0)
+                );
+            }
+            return CryptoJS.lib.WordArray.create(words, u8.length);
+        }
+
         function constantTimeCompare(a, b) {
             if (a.length !== b.length) return false;
             let result = 0;
@@ -385,6 +396,21 @@
             return { percent: Math.max(10, score), text: texts[idx], color: colors[idx] };
         }
 
+        function getTimestampFilename(base, ext) {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            return `${base}_${yyyy}${mm}${dd}_${hh}${min}${ss}${ext}`;
+        }
+
+        function looksLikeCustomBase(str) {
+            return /^[あ-んアイウエオカキクケコサシスセソタチツテトン\s\r\n\t]*$/.test(str);
+        }
+
         class App {
             constructor() {
                 this.mode = 'encrypt';
@@ -394,7 +420,7 @@
                 this.lastMime = 'application/octet-stream';
                 this.lastFileName = '';
                 this.importedFile = null;
-                this.inputMime = 'text/plain';
+                this.inputMime = 'application/octet-stream';
                 this.initElements();
                 this.bindEvents();
                 this.setupDragAndDrop();
@@ -428,7 +454,6 @@
                     copyButton: document.getElementById('copyButton'),
                     copyAllButton: document.getElementById('copyAllButton'),
                     downloadButton: document.getElementById('downloadButton'),
-                    redownloadButton: document.getElementById('redownloadButton'),
                     showDetailsButton: document.getElementById('showDetailsButton'),
 
                     modeText: document.getElementById('modeText'),
@@ -471,7 +496,6 @@
                 this.el.copyButton.addEventListener('click', () => this.copyResult());
                 this.el.copyAllButton.addEventListener('click', () => this.copyAll());
                 this.el.downloadButton.addEventListener('click', () => this.downloadResult());
-                this.el.redownloadButton.addEventListener('click', () => this.downloadResult());
                 this.el.showDetailsButton.addEventListener('click', () => this.showDetails());
 
                 this.el.toggleAdvanced.addEventListener('click', () => this.toggleAdvanced());
@@ -538,7 +562,7 @@
                 const file = e.target.files[0];
                 if (!file) {
                     this.importedFile = null;
-                    this.inputMime = 'text/plain';
+                    this.inputMime = 'application/octet-stream';
                     this.el.inputInfo.textContent = '';
                     this.el.inputText.value = '';
                     this.el.charCount.textContent = '0 字符';
@@ -571,7 +595,7 @@
 
             updateUI() {
                 this.el.modeText.textContent = this.mode === 'encrypt' ? '当前模式：加密' : '当前模式：解密';
-                this.el.inputLabel.textContent = this.mode === 'encrypt' ? '输入明文或文件' : '输入密文或导入.enc';
+                this.el.inputLabel.textContent = this.mode === 'encrypt' ? '输入明文或任意文件' : '输入密文或导入.enc';
                 this.el.outputLabel.textContent = this.mode === 'encrypt' ? '密文结果' : '明文/文件结果';
 
                 [this.el.encryptButton, this.el.decryptButton, this.el.clearButton].forEach(b => b.disabled = this.isProcessing);
@@ -615,23 +639,37 @@
                 this.el.outputImage.classList.add('hidden');
 
                 const isImage = mimeType.startsWith('image/');
+                let isText = mimeType.startsWith('text/');
+
+                if (!isText && !isImage) {
+                    try {
+                        const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+                        if (!/[\x00-\x08\x0E-\x1F]/.test(decoded)) {
+                            isText = true;
+                        }
+                    } catch {}
+                }
+
                 if (isImage) {
                     const blob = new Blob([bytes], { type: mimeType });
                     const url = URL.createObjectURL(blob);
                     this.el.outputImage.src = url;
                     this.el.outputImage.classList.remove('hidden');
+                    this.el.downloadButton.classList.remove('hidden');
+                    this.el.copyButton.classList.add('hidden');
+                } else if (isText) {
+                    const text = new TextDecoder('utf-8').decode(bytes);
+                    this.el.outputText.value = text;
+                    this.el.outputText.classList.remove('hidden');
+                    this.el.copyButton.classList.remove('hidden');
+                    this.el.downloadButton.classList.remove('hidden');
                 } else {
-                    try {
-                        const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-                        this.el.outputText.value = text;
-                        this.el.outputText.classList.remove('hidden');
-                    } catch {
-                        throw new Error('解密失败：内容不是有效UTF-8文本（密码错误或密文损坏）');
-                    }
+                    this.el.outputText.value = '[文件已解密，请点击下载保存]';
+                    this.el.outputText.classList.remove('hidden');
+                    this.el.downloadButton.classList.remove('hidden');
+                    this.el.copyButton.classList.add('hidden');
                 }
-                [this.el.copyButton, this.el.downloadButton, this.el.redownloadButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.remove('hidden'));
-                this.el.copyButton.classList.toggle('hidden', isImage);
-                this.el.copyAllButton.classList.toggle('hidden', isImage);
+                this.el.showDetailsButton.classList.remove('hidden');
             }
 
             downloadResult() {
@@ -672,7 +710,9 @@
 
                     const { aesKey, hmacKey } = deriveKeys(password, salt, iterations);
 
-                    const ciphertextWA = CryptoJS.AES.encrypt(CryptoJS.lib.WordArray.create(inputBytes), aesKey, {
+                    const plaintextWA = uint8ToWordArray(inputBytes);
+
+                    const ciphertextWA = CryptoJS.AES.encrypt(plaintextWA, aesKey, {
                         iv: iv,
                         mode: CryptoJS.mode.CBC,
                         padding: CryptoJS.pad.Pkcs7
@@ -684,8 +724,9 @@
                     let mimeLen = mimeBytes.length;
                     if (mimeLen > MAX_MIME_LEN) mimeLen = MAX_MIME_LEN;
 
-                    const header = new Uint8Array(1 + 1 + 4 + 16 + 16 + mimeLen);
+                    const header = new Uint8Array(1 + 1 + 1 + 4 + 16 + 16 + mimeLen);
                     let pos = 0;
+                    header[pos++] = MAGIC_BYTE;
                     header[pos++] = CURRENT_VERSION;
                     header[pos++] = mimeLen;
                     new DataView(header.buffer, pos, 4).setUint32(0, iterations, false);
@@ -711,6 +752,7 @@
                     const outputFormat = this.el.outputFormat.value;
 
                     let outputBytes, mime, fileName;
+                    let isBase = false;
                     if (outputFormat === 'base') {
                         const cipher = customBaseEncode(combined);
                         this.el.outputText.value = cipher;
@@ -720,14 +762,15 @@
                         const textBytes = new TextEncoder().encode(cipher);
                         outputBytes = textBytes;
                         mime = 'text/plain;charset=utf-8';
-                        fileName = this.importedFile ? this.importedFile.name + '.enc.txt' : 'encrypted.enc.txt';
+                        fileName = this.importedFile ? this.importedFile.name + '.enc.txt' : getTimestampFilename('encrypted', '.enc.txt');
+                        isBase = true;
                     } else {
                         this.el.outputText.value = '[二进制文件已直接下载]';
                         this.el.outputText.classList.remove('hidden');
 
                         outputBytes = combined;
                         mime = 'application/octet-stream';
-                        fileName = this.importedFile ? this.importedFile.name + '.enc' : 'encrypted.enc';
+                        fileName = this.importedFile ? this.importedFile.name + '.enc' : getTimestampFilename('encrypted', '.enc');
 
                         const blob = new Blob([combined], { type: mime });
                         const url = URL.createObjectURL(blob);
@@ -757,7 +800,10 @@
                     this.el.operationStatus.textContent = '加密成功';
                     this.el.operationStatus.className = 'text-green-600 font-medium';
 
-                    [this.el.copyButton, this.el.redownloadButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.remove('hidden'));
+                    [this.el.downloadButton, this.el.showDetailsButton].forEach(b => b.classList.remove('hidden'));
+                    if (isBase) {
+                        this.el.copyButton.classList.remove('hidden');
+                    }
 
                     this.showMessage('加密成功', 'success');
                 } catch (e) {
@@ -781,11 +827,15 @@
                     if (this.importedFile) {
                         const arrayBuffer = await this.importedFile.arrayBuffer();
                         const buf = new Uint8Array(arrayBuffer);
-                        if (this.importedFile.name.endsWith('.txt')) {
-                            const text = new TextDecoder().decode(buf).trim();
-                            combined = customBaseDecode(text);
-                        } else {
+                        if (buf[0] === MAGIC_BYTE) {
                             combined = buf;
+                        } else {
+                            const text = new TextDecoder().decode(buf);
+                            if (looksLikeCustomBase(text)) {
+                                combined = customBaseDecode(text.trim());
+                            } else {
+                                combined = buf;
+                            }
                         }
                     } else {
                         const input = this.el.inputText.value.trim();
@@ -793,9 +843,11 @@
                         combined = customBaseDecode(input);
                     }
 
-                    if (combined.length < 70) throw new Error('密文长度异常，可能已损坏');
+                    if (combined.length < 71) throw new Error('密文长度异常，可能已损坏');
 
                     let offset = 0;
+                    const magic = combined[offset++];
+                    if (magic !== MAGIC_BYTE) throw new Error('非法密文：缺少magic byte');
 
                     const version = combined[offset++];
                     if (version > CURRENT_VERSION) throw new Error(`不支持的密文版本：${version}`);
@@ -825,7 +877,7 @@
                     );
                     offset += 16;
 
-                    let mimeType = 'text/plain';
+                    let mimeType = 'application/octet-stream';
                     if (mimeLen > 0) {
                         mimeType = new TextDecoder().decode(
                             combined.subarray(offset, offset + mimeLen)
@@ -866,9 +918,22 @@
 
                     this.displayOutput(plaintextBytes, mimeType);
 
+                    let originalName = this.importedFile ? this.importedFile.name.replace(/\.enc(\.txt)?$/i, '') : getTimestampFilename('decrypted', '.txt');
+                    if (!originalName.match(/\.\w+$/)) {
+                        const extMap = {
+                            'image/jpeg': '.jpg',
+                            'image/png': '.png',
+                            'image/gif': '.gif',
+                            'application/zip': '.zip',
+                            'application/x-rar-compressed': '.rar',
+                            'text/plain': '.txt'
+                        };
+                        originalName += extMap[mimeType] || '.bin';
+                    }
+                    this.lastFileName = originalName;
+
                     this.lastOutputBytes = plaintextBytes;
                     this.lastMime = mimeType;
-                    this.lastFileName = this.importedFile ? this.importedFile.name.replace(/\.enc(\.txt)?$/, '') : 'decrypted';
 
                     this.lastResult = {
                         version,
@@ -911,9 +976,9 @@
                 this.el.inputInfo.textContent = '';
                 this.el.importFile.value = '';
                 this.importedFile = null;
-                this.inputMime = 'text/plain';
+                this.inputMime = 'application/octet-stream';
                 this.lastOutputBytes = null;
-                [this.el.copyButton, this.el.downloadButton, this.el.redownloadButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.add('hidden'));
+                [this.el.copyButton, this.el.copyAllButton, this.el.downloadButton, this.el.showDetailsButton].forEach(b => b.classList.add('hidden'));
                 this.toggleKeyInput();
                 this.el.advancedOptions.classList.add('hidden');
                 this.el.toggleAdvanced.textContent = '显示高级选项';
