@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AES-256 + 日文Base 加解密工具</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <title>AES-256-GCM + 日文Base 加解密工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -14,13 +13,11 @@
             background-attachment: fixed;
             min-height: 100vh;
         }
-       
         .glass {
             background: rgba(255, 255, 255, 0.10);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-       
         .loading {
             display: none;
             position: absolute;
@@ -28,7 +25,6 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
-       
         .progress-bar {
             width: 100%;
             height: 4px;
@@ -37,14 +33,12 @@
             overflow: hidden;
             margin-top: 8px;
         }
-       
         .progress-fill {
             height: 100%;
             background: #3b82f6;
             width: 0%;
             transition: width 0.3s ease;
         }
-
         #dragOverlay {
             display: none;
             position: fixed;
@@ -65,23 +59,20 @@
     <div id="dragOverlay">拖入文件到此处导入</div>
     
     <div class="glass rounded-xl shadow-2xl p-6 max-w-2xl w-full relative">
-        <!-- 加载动画 -->
         <div id="loadingSpinner" class="loading">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-       
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">AES-256 + 日文Base 加解密工具</h1>
+        
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">AES-256-GCM + 日文Base 加解密工具</h1>
         <p class="text-center text-gray-600 text-sm mb-6"></p>
-       
-        <!-- 模式指示器 -->
+        
         <div class="mb-6 text-center">
             <span id="modeIndicator" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                 <span class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
                 <span id="modeText">当前模式：加密</span>
             </span>
         </div>
-       
-        <!-- 密钥设置区域 -->
+        
         <div class="mb-6 bg-gray-50 rounded-lg p-4 border">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-medium text-gray-700">密钥设置</h3>
@@ -89,8 +80,6 @@
                     显示高级选项
                 </button>
             </div>
-           
-            <!-- 基本密钥选项 -->
             <div class="mb-4">
                 <label class="inline-flex items-center">
                     <input id="useCustomKey" type="checkbox" class="form-checkbox h-5 w-5 text-blue-600">
@@ -98,8 +87,6 @@
                 </label>
                 <p class="text-xs text-gray-500 ml-7 mt-1">不启用则使用默认密钥</p>
             </div>
-           
-            <!-- 密钥输入框 -->
             <div id="keyInputContainer" class="mb-4 hidden">
                 <label class="block text-sm font-medium text-gray-600 mb-1">输入密钥/密码</label>
                 <div class="relative">
@@ -116,8 +103,6 @@
                     <span id="keyStrengthText" class="ml-2 text-xs text-gray-500">密钥强度</span>
                 </div>
             </div>
-           
-            <!-- 高级选项 -->
             <div id="advancedOptions" class="hidden space-y-4 mt-4 pt-4 border-t">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">盐值（Salt，可选十六进制）</label>
@@ -125,28 +110,23 @@
                            placeholder="留空自动生成随机盐值">
                     <p class="text-xs text-gray-500 mt-1">自定义盐值需在解密时手动输入相同值</p>
                 </div>
-               
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">迭代次数</label>
-                    <input id="iterationsInput" type="number" value="50000" min="1000" max="200000"
+                    <input id="iterationsInput" type="number" value="200000" min="1000" max="1000000"
                            class="w-full p-2 border rounded-md">
-                    <p class="text-xs text-gray-500 mt-1">默认50000，平衡安全与性能（范围1000-200000）</p>
+                    <p class="text-xs text-gray-500 mt-1">默认200000，更高更安全（上限1000000）</p>
                 </div>
-                
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">输出格式</label>
                     <select id="outputFormat" class="w-full p-2 border rounded-md">
                         <option value="base">日文Base文本（默认）</option>
-                        <option value="binary">二进制.enc文件（适合大文件/压缩包）</option>
+                        <option value="binary">二进制.enc文件（适合大文件）</option>
                     </select>
-                    <p class="text-xs text-gray-500 mt-1">压缩包等大文件强烈建议用二进制格式</p>
                 </div>
             </div>
-           
             <p id="keyInfo" class="text-sm text-gray-500 mt-2"></p>
         </div>
-       
-        <!-- 输入区域 -->
+        
         <div class="mb-6">
             <div class="flex justify-between items-center mb-2">
                 <label id="inputLabel" class="block text-sm font-medium text-gray-600">输入明文或任意文件</label>
@@ -157,122 +137,72 @@
                       placeholder="加密请输入明文或导入任意文件，解密请输入日文密文或导入.enc文件"></textarea>
             <div class="mt-2">
                 <label class="bg-gray-200 px-4 py-2 rounded cursor-pointer hover:bg-gray-300 inline-block">
-                    📁 导入文件（支持文本，文件，图片等） <input type="file" id="importFile" class="hidden" accept="*/*">
+                    📁 导入文件（支持任意类型） <input type="file" id="importFile" class="hidden" accept="*/*">
                 </label>
             </div>
             <p id="inputInfo" class="text-sm text-gray-500 mt-1"></p>
         </div>
-       
-        <!-- 操作按钮 -->
+        
         <div class="flex flex-wrap justify-center gap-3 mb-6">
-            <button id="encryptButton" class="flex-1 min-w-[120px] bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 active:bg-blue-600 focus:bg-blue-600 focus:outline-none transition-all font-medium flex items-center justify-center">
-                <span>🔒</span>
-                <span class="ml-2">加密</span>
+            <button id="encryptButton" class="flex-1 min-w-[120px] bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium flex items-center justify-center">
+                <span>🔒</span><span class="ml-2">加密</span>
             </button>
-            <button id="decryptButton" class="flex-1 min-w-[120px] bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 active:bg-green-600 focus:bg-green-600 focus:outline-none transition-all font-medium flex items-center justify-center">
-                <span>🔓</span>
-                <span class="ml-2">解密</span>
+            <button id="decryptButton" class="flex-1 min-w-[120px] bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 font-medium flex items-center justify-center">
+                <span>🔓</span><span class="ml-2">解密</span>
             </button>
-            <button id="clearButton" class="flex-1 min-w-[120px] bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 active:bg-gray-500 focus:bg-gray-500 focus:outline-none transition-all font-medium flex items-center justify-center">
-                <span>🗑️</span>
-                <span class="ml-2">清空</span>
+            <button id="clearButton" class="flex-1 min-w-[120px] bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 font-medium flex items-center justify-center">
+                <span>🗑️</span><span class="ml-2">清空</span>
             </button>
         </div>
-       
-        <!-- 结果区域 -->
+        
         <div class="mb-6">
             <div class="flex justify-between items-center mb-2">
                 <label id="outputLabel" class="block text-sm font-medium text-gray-600">结果</label>
-                <button id="copyAllButton" class="text-sm text-blue-600 hover:text-blue-800 hidden">
-                    复制全部
-                </button>
+                <button id="copyAllButton" class="text-sm text-blue-600 hover:text-blue-800 hidden">复制全部</button>
             </div>
             <div id="outputContainer" class="w-full border rounded-lg bg-gray-50 overflow-hidden">
-                <textarea id="outputText" rows="5"
-                          class="w-full p-4 font-mono text-base hidden"
-                          readonly placeholder="结果将显示在这里"></textarea>
+                <textarea id="outputText" rows="5" class="w-full p-4 font-mono text-base hidden" readonly></textarea>
                 <img id="outputImage" class="max-w-full h-auto hidden" alt="解密图片预览">
             </div>
             <div id="outputInfo" class="mt-3 space-y-2">
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">操作状态：</span>
-                    <span id="operationStatus" class="text-gray-800">就绪</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">数据大小：</span>
-                    <span id="dataSize" class="text-gray-800">-</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">处理时间：</span>
-                    <span id="processingTime" class="text-gray-800">-</span>
-                </div>
+                <div class="flex justify-between text-sm"><span class="text-gray-600">操作状态：</span><span id="operationStatus" class="text-gray-800">就绪</span></div>
+                <div class="flex justify-between text-sm"><span class="text-gray-600">数据大小：</span><span id="dataSize" class="text-gray-800">-</span></div>
+                <div class="flex justify-between text-sm"><span class="text-gray-600">处理时间：</span><span id="processingTime" class="text-gray-800">-</span></div>
             </div>
         </div>
-       
-        <!-- 操作按钮组 -->
+        
         <div class="flex flex-wrap justify-center gap-3">
-            <button id="copyButton" class="flex-1 min-w-[140px] bg-emerald-500 text-white py-3 px-4 rounded-lg hover:bg-emerald-600 active:bg-emerald-500 focus:bg-emerald-500 focus:outline-none transition-all hidden">
-                📋 复制结果
-            </button>
-            <button id="downloadButton" class="flex-1 min-w-[140px] bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 active:bg-purple-500 focus:bg-purple-500 focus:outline-none transition-all hidden">
-                ⬇️ 下载文件
-            </button>
-            <button id="showDetailsButton" class="flex-1 min-w-[140px] bg-amber-500 text-white py-3 px-4 rounded-lg hover:bg-amber-600 active:bg-amber-500 focus:bg-amber-500 focus:outline-none transition-all hidden">
-                🔍 查看详情
-            </button>
+            <button id="copyButton" class="flex-1 min-w-[140px] bg-emerald-500 text-white py-3 px-4 rounded-lg hover:bg-emerald-600 hidden">📋 复制结果</button>
+            <button id="downloadButton" class="flex-1 min-w-[140px] bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 hidden">⬇️ 下载文件</button>
+            <button id="showDetailsButton" class="flex-1 min-w-[140px] bg-amber-500 text-white py-3 px-4 rounded-lg hover:bg-amber-600 hidden">🔍 查看详情</button>
         </div>
-       
-        <!-- 详情模态框 -->
+        
         <div id="detailsModal" class="hidden fixed inset-0 flex items-center justify-center z-50">
             <div class="absolute inset-0 bg-transparent" id="modalBackdrop"></div>
             <div class="glass rounded-xl p-6 max-w-lg w-full mx-4 relative z-10">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-gray-800">加密详情</h3>
-                    <button id="closeModal" class="text-gray-500 hover:text-gray-700">
-                        ✕
-                    </button>
+                    <h3 class="text-lg font-bold text-gray-800">AES-256-GCM 加解密详情</h3>
+                    <button id="closeModal" class="text-gray-500 hover:text-gray-700">✕</button>
                 </div>
                 <div class="space-y-3">
-                    <div>
-                        <span class="text-sm text-gray-600">版本：</span>
-                        <span id="modalVersion" class="text-sm font-mono">2</span>
-                    </div>
-                    <div>
-                        <span class="text-sm text-gray-600">迭代次数：</span>
-                        <span id="modalIterations" class="text-sm font-mono">-</span>
-                    </div>
-                    <div>
-                        <span class="text-sm text-gray-600">MIME类型：</span>
-                        <span id="modalMime" class="text-sm font-mono">-</span>
-                    </div>
-                    <div>
-                        <span class="text-sm text-gray-600">IV：</span>
-                        <span id="modalIV" class="text-sm font-mono break-all">-</span>
-                    </div>
-                    <div>
-                        <span class="text-sm text-gray-600">盐值：</span>
-                        <span id="modalSalt" class="text-sm font-mono break-all">-</span>
-                    </div>
-                    <div>
-                        <span class="text-sm text-gray-600">HMAC：</span>
-                        <span id="modalHmac" class="text-sm font-mono break-all">-</span>
-                    </div>
+                    <div><span class="text-sm text-gray-600">版本：</span><span id="modalVersion" class="text-sm font-mono">4</span></div>
+                    <div><span class="text-sm text-gray-600">迭代次数：</span><span id="modalIterations" class="text-sm font-mono">-</span></div>
+                    <div><span class="text-sm text-gray-600">MIME类型：</span><span id="modalMime" class="text-sm font-mono">-</span></div>
+                    <div><span class="text-sm text-gray-600">IV（12字节）：</span><span id="modalIV" class="text-sm font-mono break-all">-</span></div>
+                    <div><span class="text-sm text-gray-600">盐值（16字节）：</span><span id="modalSalt" class="text-sm font-mono break-all">-</span></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const CURRENT_VERSION = 2;
+        const CURRENT_VERSION = 4;
         const MAGIC_BYTE = 0xE2;
-        const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB
-        const MAX_ITERATIONS = 200000;
-        const MIN_ITERATIONS = 1000;
+        const SEPARATOR_BYTE = 0x00;
+        const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024;
         const MAX_MIME_LEN = 255;
-
         const customAlphabet = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわゐゑをんアイウエオカキクケコサシスセソタ';
         const paddingChar = 'ン';
-
         if (customAlphabet.length !== 64) throw new Error('字母表必须64位');
 
         const encodeMap = new Map();
@@ -301,32 +231,26 @@
 
         function customBaseDecode(str) {
             if (str.length % 4 !== 0) throw new Error('密文长度必须为4的倍数');
-
             const padIndex = str.indexOf(paddingChar);
             if (padIndex !== -1 && !str.slice(padIndex).match(/^ン{0,2}$/)) {
-                throw new Error('非法密文：padding 位置或数量错误');
+                throw new Error('非法密文：padding错误');
             }
-
             let padding = 0;
             if (str.endsWith(paddingChar + paddingChar)) padding = 2;
             else if (str.endsWith(paddingChar)) padding = 1;
-
             const outLen = (str.length / 4) * 3 - padding;
             const out = new Uint8Array(outLen);
-
             let outIdx = 0;
             for (let i = 0; i < str.length; i += 4) {
                 const c1 = decodeMap.get(str[i]);
                 const c2 = decodeMap.get(str[i+1]);
                 const c3 = str[i+2] === paddingChar ? 0 : decodeMap.get(str[i+2]);
                 const c4 = str[i+3] === paddingChar ? 0 : decodeMap.get(str[i+3]);
-
                 if (c1 === undefined || c2 === undefined ||
                     (str[i+2] !== paddingChar && c3 === undefined) ||
                     (str[i+3] !== paddingChar && c4 === undefined)) {
-                    throw new Error(`密文包含非法字符或损坏（位置约${i+1}）`);
+                    throw new Error(`密文包含非法字符（位置约${i+1}）`);
                 }
-
                 if (outIdx < outLen) out[outIdx++] = (c1 << 2) | (c2 >> 4);
                 if (outIdx < outLen) out[outIdx++] = ((c2 & 15) << 4) | (c3 >> 2);
                 if (outIdx < outLen) out[outIdx++] = ((c3 & 3) << 6) | c4;
@@ -334,51 +258,35 @@
             return out;
         }
 
-        function wordArrayToUint8Array(wordArray) {
-            const bytes = new Uint8Array(wordArray.sigBytes);
-            let offset = 0;
-            for (let i = 0; i < wordArray.words.length; i++) {
-                const word = wordArray.words[i];
-                if (offset < wordArray.sigBytes) bytes[offset++] = (word >> 24) & 0xff;
-                if (offset < wordArray.sigBytes) bytes[offset++] = (word >> 16) & 0xff;
-                if (offset < wordArray.sigBytes) bytes[offset++] = (word >> 8) & 0xff;
-                if (offset < wordArray.sigBytes) bytes[offset++] = word & 0xff;
+        function hexToUint8(hex) {
+            const arr = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < hex.length; i += 2) {
+                arr[i/2] = parseInt(hex.substr(i, 2), 16);
             }
-            return bytes;
+            return arr;
         }
 
-        function uint8ToWordArray(u8) {
-            const words = [];
-            for (let i = 0; i < u8.length; i += 4) {
-                words.push(
-                    ((u8[i] || 0) << 24) |
-                    ((u8[i + 1] || 0) << 16) |
-                    ((u8[i + 2] || 0) << 8) |
-                    (u8[i + 3] || 0)
-                );
-            }
-            return CryptoJS.lib.WordArray.create(words, u8.length);
-        }
-
-        function constantTimeCompare(a, b) {
-            if (a.length !== b.length) return false;
-            let result = 0;
-            for (let i = 0; i < a.length; i++) {
-                result |= a[i] ^ b[i];
-            }
-            return result === 0;
-        }
-
-        function deriveKeys(password, salt, iterations) {
-            const master = CryptoJS.PBKDF2(password, salt, {
-                keySize: 512 / 32,
-                iterations: iterations,
-                hasher: CryptoJS.algo.SHA256
-            });
-            const masterBytes = wordArrayToUint8Array(master);
-            const aesKey = CryptoJS.enc.Hex.parse(Array.from(masterBytes.subarray(0, 32)).map(b => b.toString(16).padStart(2, '0')).join(''));
-            const hmacKey = CryptoJS.enc.Hex.parse(Array.from(masterBytes.subarray(32, 64)).map(b => b.toString(16).padStart(2, '0')).join(''));
-            return { aesKey, hmacKey };
+        async function deriveKey(password, salt, iterations) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                "raw",
+                enc.encode(password),
+                "PBKDF2",
+                false,
+                ["deriveKey"]
+            );
+            return await crypto.subtle.deriveKey(
+                {
+                    name: "PBKDF2",
+                    salt: salt,
+                    iterations: iterations,
+                    hash: "SHA-256"
+                },
+                keyMaterial,
+                { name: "AES-GCM", length: 256 },
+                false,
+                ["encrypt", "decrypt"]
+            );
         }
 
         function evaluateKeyStrength(pass) {
@@ -407,6 +315,36 @@
             return `${base}_${yyyy}${mm}${dd}_${hh}${min}${ss}${ext}`;
         }
 
+        function getExtensionFromMime(mime) {
+            const map = {
+                'text/plain': '.txt',
+                'text/html': '.html',
+                'text/css': '.css',
+                'text/javascript': '.js',
+                'application/json': '.json',
+                'image/jpeg': '.jpg',
+                'image/png': '.png',
+                'image/gif': '.gif',
+                'image/webp': '.webp',
+                'image/svg+xml': '.svg',
+                'application/pdf': '.pdf',
+                'application/zip': '.zip',
+                'application/x-rar-compressed': '.rar',
+                'video/mp4': '.mp4',
+                'audio/mpeg': '.mp3'
+            };
+            return map[mime] || '.bin';
+        }
+
+        function isLikelyText(bytes) {
+            try {
+                const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(0, Math.min(1024, bytes.length)));
+                return !/[\x00-\x08\x0E-\x1F]/.test(decoded);
+            } catch {
+                return false;
+            }
+        }
+
         function looksLikeCustomBase(str) {
             return /^[あ-んアイウエオカキクケコサシスセソタチツテトン\s\r\n\t]*$/.test(str);
         }
@@ -426,7 +364,6 @@
                 this.setupDragAndDrop();
                 this.updateUI();
             }
-
             initElements() {
                 this.el = {
                     useCustomKey: document.getElementById('useCustomKey'),
@@ -436,18 +373,15 @@
                     keyStrengthBar: document.getElementById('keyStrengthBar'),
                     keyStrengthText: document.getElementById('keyStrengthText'),
                     keyInfo: document.getElementById('keyInfo'),
-
                     inputText: document.getElementById('inputText'),
                     inputLabel: document.getElementById('inputLabel'),
                     charCount: document.getElementById('charCount'),
                     inputInfo: document.getElementById('inputInfo'),
                     importFile: document.getElementById('importFile'),
-
                     outputText: document.getElementById('outputText'),
                     outputImage: document.getElementById('outputImage'),
                     outputContainer: document.getElementById('outputContainer'),
                     outputLabel: document.getElementById('outputLabel'),
-
                     encryptButton: document.getElementById('encryptButton'),
                     decryptButton: document.getElementById('decryptButton'),
                     clearButton: document.getElementById('clearButton'),
@@ -455,19 +389,16 @@
                     copyAllButton: document.getElementById('copyAllButton'),
                     downloadButton: document.getElementById('downloadButton'),
                     showDetailsButton: document.getElementById('showDetailsButton'),
-
                     modeText: document.getElementById('modeText'),
                     loadingSpinner: document.getElementById('loadingSpinner'),
                     operationStatus: document.getElementById('operationStatus'),
                     dataSize: document.getElementById('dataSize'),
                     processingTime: document.getElementById('processingTime'),
-
                     toggleAdvanced: document.getElementById('toggleAdvanced'),
                     advancedOptions: document.getElementById('advancedOptions'),
                     saltInput: document.getElementById('saltInput'),
                     iterationsInput: document.getElementById('iterationsInput'),
                     outputFormat: document.getElementById('outputFormat'),
-
                     detailsModal: document.getElementById('detailsModal'),
                     modalBackdrop: document.getElementById('modalBackdrop'),
                     closeModal: document.getElementById('closeModal'),
@@ -476,52 +407,41 @@
                     modalMime: document.getElementById('modalMime'),
                     modalIV: document.getElementById('modalIV'),
                     modalSalt: document.getElementById('modalSalt'),
-                    modalHmac: document.getElementById('modalHmac'),
-
                     dragOverlay: document.getElementById('dragOverlay')
                 };
             }
-
             bindEvents() {
                 this.el.useCustomKey.addEventListener('change', () => this.toggleKeyInput());
                 this.el.keyInput.addEventListener('input', () => this.updateKeyStrength());
                 this.el.toggleKeyVisibility.addEventListener('click', () => this.toggleKeyVisibility());
                 this.el.inputText.addEventListener('input', () => this.updateCharCount());
                 this.el.importFile.addEventListener('change', (e) => this.handleFileImport(e));
-
                 this.el.encryptButton.addEventListener('click', () => this.handleEncrypt());
                 this.el.decryptButton.addEventListener('click', () => this.handleDecrypt());
                 this.el.clearButton.addEventListener('click', () => this.handleClear());
-
                 this.el.copyButton.addEventListener('click', () => this.copyResult());
                 this.el.copyAllButton.addEventListener('click', () => this.copyAll());
                 this.el.downloadButton.addEventListener('click', () => this.downloadResult());
                 this.el.showDetailsButton.addEventListener('click', () => this.showDetails());
-
                 this.el.toggleAdvanced.addEventListener('click', () => this.toggleAdvanced());
                 this.el.closeModal.addEventListener('click', () => this.hideDetails());
                 this.el.modalBackdrop.addEventListener('click', () => this.hideDetails());
                 this.el.detailsModal.addEventListener('click', (e) => { if (e.target === this.el.detailsModal) this.hideDetails(); });
             }
-
             setupDragAndDrop() {
                 const body = document.body;
-
                 body.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     this.el.dragOverlay.style.display = 'flex';
                 });
-
                 body.addEventListener('dragleave', (e) => {
                     if (!body.contains(e.relatedTarget)) {
                         this.el.dragOverlay.style.display = 'none';
                     }
                 });
-
                 body.addEventListener('drop', (e) => {
                     e.preventDefault();
                     this.el.dragOverlay.style.display = 'none';
-
                     if (e.dataTransfer.files.length > 0) {
                         const file = e.dataTransfer.files[0];
                         this.importedFile = file;
@@ -532,40 +452,32 @@
                     }
                 });
             }
-
             toggleKeyInput() {
                 this.el.keyInputContainer.classList.toggle('hidden', !this.el.useCustomKey.checked);
                 this.updateKeyStrength();
             }
-
             toggleKeyVisibility() {
                 const type = this.el.keyInput.type === 'password' ? 'text' : 'password';
                 this.el.keyInput.type = type;
                 this.el.toggleKeyVisibility.textContent = type === 'password' ? '👁️' : '🙈';
             }
-
             updateKeyStrength() {
                 const pass = this.el.useCustomKey.checked ? this.el.keyInput.value : '';
                 const strength = evaluateKeyStrength(pass);
                 this.el.keyStrengthBar.style.width = strength.percent + '%';
                 this.el.keyStrengthText.textContent = `强度：${strength.text}`;
                 this.el.keyStrengthText.className = `ml-2 text-xs font-medium ${strength.color}`;
-                this.el.keyInfo.textContent = this.el.useCustomKey.checked ? '' : '';
             }
-
             updateCharCount() {
                 const len = this.el.inputText.value.length;
                 this.el.charCount.textContent = `${len} 字符`;
             }
-
             handleFileImport(e) {
                 const file = e.target.files[0];
                 if (!file) {
                     this.importedFile = null;
                     this.inputMime = 'application/octet-stream';
                     this.el.inputInfo.textContent = '';
-                    this.el.inputText.value = '';
-                    this.el.charCount.textContent = '0 字符';
                     return;
                 }
                 this.importedFile = file;
@@ -574,56 +486,45 @@
                 this.el.charCount.textContent = '';
                 this.el.inputInfo.textContent = `已导入：${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
             }
-
             toggleAdvanced() {
                 const hidden = this.el.advancedOptions.classList.toggle('hidden');
                 this.el.toggleAdvanced.textContent = hidden ? '显示高级选项' : '隐藏高级选项';
             }
-
             showLoading() {
                 this.el.loadingSpinner.style.display = 'block';
                 this.isProcessing = true;
                 this.el.operationStatus.textContent = '处理中...';
                 this.updateUI();
             }
-
             hideLoading() {
                 this.el.loadingSpinner.style.display = 'none';
                 this.isProcessing = false;
                 this.updateUI();
             }
-
             updateUI() {
                 this.el.modeText.textContent = this.mode === 'encrypt' ? '当前模式：加密' : '当前模式：解密';
                 this.el.inputLabel.textContent = this.mode === 'encrypt' ? '输入明文或任意文件' : '输入密文或导入.enc';
                 this.el.outputLabel.textContent = this.mode === 'encrypt' ? '密文结果' : '明文/文件结果';
-
                 [this.el.encryptButton, this.el.decryptButton, this.el.clearButton].forEach(b => b.disabled = this.isProcessing);
             }
-
             getPassword() {
                 if (this.el.useCustomKey.checked) {
-                    if (!this.el.keyInput.value.trim()) {
-                        throw new Error('已启用自定义密钥但未输入密码');
-                    }
+                    if (!this.el.keyInput.value.trim()) throw new Error('已启用自定义密钥但未输入密码');
                     return this.el.keyInput.value.trim();
                 }
                 return 'z7jgX9RwezqpY588dRphLRMTE3ie2uTX';
             }
-
             getSalt() {
                 const val = this.el.saltInput.value.trim();
                 if (val) {
                     if (!/^[0-9a-fA-F]+$/.test(val) || val.length % 2 !== 0) throw new Error('盐值必须为有效十六进制字符串');
-                    return CryptoJS.enc.Hex.parse(val);
+                    return hexToUint8(val);
                 }
-                return CryptoJS.lib.WordArray.random(16);
+                return crypto.getRandomValues(new Uint8Array(16));
             }
-
             getIterations() {
-                return parseInt(this.el.iterationsInput.value) || 50000;
+                return Math.max(1000, Math.min(1000000, parseInt(this.el.iterationsInput.value) || 200000));
             }
-
             async getInputBytes() {
                 if (this.importedFile) {
                     const arrayBuffer = await this.importedFile.arrayBuffer();
@@ -633,23 +534,11 @@
                 if (!text) throw new Error('请输入内容或导入文件');
                 return new TextEncoder().encode(text);
             }
-
             displayOutput(bytes, mimeType) {
                 this.el.outputText.classList.add('hidden');
                 this.el.outputImage.classList.add('hidden');
-
                 const isImage = mimeType.startsWith('image/');
-                let isText = mimeType.startsWith('text/');
-
-                if (!isText && !isImage) {
-                    try {
-                        const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-                        if (!/[\x00-\x08\x0E-\x1F]/.test(decoded)) {
-                            isText = true;
-                        }
-                    } catch {}
-                }
-
+                let isText = mimeType.startsWith('text/') || isLikelyText(bytes);
                 if (isImage) {
                     const blob = new Blob([bytes], { type: mimeType });
                     const url = URL.createObjectURL(blob);
@@ -664,14 +553,13 @@
                     this.el.copyButton.classList.remove('hidden');
                     this.el.downloadButton.classList.remove('hidden');
                 } else {
-                    this.el.outputText.value = '[文件已解密，请点击下载保存]';
+                    this.el.outputText.value = '[二进制文件已解密，请点击下载保存]';
                     this.el.outputText.classList.remove('hidden');
                     this.el.downloadButton.classList.remove('hidden');
                     this.el.copyButton.classList.add('hidden');
                 }
                 this.el.showDetailsButton.classList.remove('hidden');
             }
-
             downloadResult() {
                 if (!this.lastOutputBytes) return;
                 const blob = new Blob([this.lastOutputBytes], { type: this.lastMime });
@@ -682,96 +570,70 @@
                 a.click();
                 URL.revokeObjectURL(url);
             }
-
             async handleEncrypt() {
                 if (this.isProcessing) return;
                 this.mode = 'encrypt';
                 this.updateUI();
-
                 const startTime = performance.now();
-
                 try {
                     this.showLoading();
-
                     const inputBytes = await this.getInputBytes();
-
                     if (inputBytes.length > LARGE_FILE_THRESHOLD && this.el.outputFormat.value === 'base') {
-                        if (!confirm(`文件较大(${ (inputBytes.length / 1024 / 1024).toFixed(2) }MB)，日文Base格式会膨胀约37%。建议切换为二进制.enc格式，是否继续使用日文Base？`)) {
+                        if (!confirm(`文件较大(${ (inputBytes.length / 1024 / 1024).toFixed(2) }MB)，日文Base会膨胀约37%。建议使用二进制格式，是否继续？`)) {
                             this.el.outputFormat.value = 'binary';
                         }
                     }
-
                     const password = this.getPassword();
                     const salt = this.getSalt();
                     const iterations = this.getIterations();
-                    if (iterations < MIN_ITERATIONS || iterations > MAX_ITERATIONS) throw new Error('迭代次数超出安全范围');
+                    const iv = crypto.getRandomValues(new Uint8Array(12));
+                    const key = await deriveKey(password, salt, iterations);
 
-                    const iv = CryptoJS.lib.WordArray.random(16);
-
-                    const { aesKey, hmacKey } = deriveKeys(password, salt, iterations);
-
-                    const plaintextWA = uint8ToWordArray(inputBytes);
-
-                    const ciphertextWA = CryptoJS.AES.encrypt(plaintextWA, aesKey, {
-                        iv: iv,
-                        mode: CryptoJS.mode.CBC,
-                        padding: CryptoJS.pad.Pkcs7
-                    }).ciphertext;
-
-                    const ciphertextBytes = wordArrayToUint8Array(ciphertextWA);
+                    const encrypted = await crypto.subtle.encrypt(
+                        { name: "AES-GCM", iv: iv },
+                        key,
+                        inputBytes
+                    );
+                    const ciphertext = new Uint8Array(encrypted);
+                    const tag = ciphertext.slice(-16);
+                    const cipherBody = ciphertext.slice(0, -16);
 
                     const mimeBytes = new TextEncoder().encode(this.inputMime);
-                    let mimeLen = mimeBytes.length;
-                    if (mimeLen > MAX_MIME_LEN) mimeLen = MAX_MIME_LEN;
+                    let mimeLen = Math.min(mimeBytes.length, MAX_MIME_LEN);
 
-                    const header = new Uint8Array(1 + 1 + 1 + 4 + 16 + 16 + mimeLen);
+                    const header = new Uint8Array(1 + 1 + 1 + 4 + 16 + 12 + mimeLen + 1);
                     let pos = 0;
                     header[pos++] = MAGIC_BYTE;
                     header[pos++] = CURRENT_VERSION;
                     header[pos++] = mimeLen;
-                    new DataView(header.buffer, pos, 4).setUint32(0, iterations, false);
+                    new DataView(header.buffer).setUint32(pos, iterations, false);
                     pos += 4;
-                    header.set(wordArrayToUint8Array(salt), pos);
-                    pos += 16;
-                    header.set(wordArrayToUint8Array(iv), pos);
-                    pos += 16;
-                    header.set(mimeBytes.slice(0, mimeLen), pos);
+                    header.set(salt, pos); pos += 16;
+                    header.set(iv, pos); pos += 12;
+                    header.set(mimeBytes.slice(0, mimeLen), pos); pos += mimeLen;
+                    header[pos++] = SEPARATOR_BYTE;
 
-                    const macBytes = new Uint8Array(header.length + ciphertextBytes.length);
-                    macBytes.set(header, 0);
-                    macBytes.set(ciphertextBytes, header.length);
-
-                    const hmac = CryptoJS.HmacSHA256(CryptoJS.lib.WordArray.create(macBytes), hmacKey);
-                    const hmacBytes = wordArrayToUint8Array(hmac);
-
-                    const combined = new Uint8Array(header.length + ciphertextBytes.length + 32);
+                    const combined = new Uint8Array(header.length + cipherBody.length + 16);
                     combined.set(header, 0);
-                    combined.set(ciphertextBytes, header.length);
-                    combined.set(hmacBytes, header.length + ciphertextBytes.length);
+                    combined.set(cipherBody, header.length);
+                    combined.set(tag, header.length + cipherBody.length);
 
                     const outputFormat = this.el.outputFormat.value;
-
                     let outputBytes, mime, fileName;
-                    let isBase = false;
                     if (outputFormat === 'base') {
-                        const cipher = customBaseEncode(combined);
-                        this.el.outputText.value = cipher;
+                        const text = customBaseEncode(combined);
+                        this.el.outputText.value = text;
                         this.el.outputText.classList.remove('hidden');
-                        this.el.outputImage.classList.add('hidden');
-
-                        const textBytes = new TextEncoder().encode(cipher);
-                        outputBytes = textBytes;
+                        outputBytes = new TextEncoder().encode(text);
                         mime = 'text/plain;charset=utf-8';
                         fileName = this.importedFile ? this.importedFile.name + '.enc.txt' : getTimestampFilename('encrypted', '.enc.txt');
-                        isBase = true;
+                        this.el.copyButton.classList.remove('hidden');
                     } else {
-                        this.el.outputText.value = '[二进制文件已直接下载]';
+                        this.el.outputText.value = '[二进制加密文件已生成，请点击下载]';
                         this.el.outputText.classList.remove('hidden');
-
                         outputBytes = combined;
                         mime = 'application/octet-stream';
                         fileName = this.importedFile ? this.importedFile.name + '.enc' : getTimestampFilename('encrypted', '.enc');
-
                         const blob = new Blob([combined], { type: mime });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
@@ -784,14 +646,12 @@
                     this.lastOutputBytes = outputBytes;
                     this.lastMime = mime;
                     this.lastFileName = fileName;
-
                     this.lastResult = {
                         version: CURRENT_VERSION,
                         iterations,
                         mime: this.inputMime,
-                        iv: iv.toString(CryptoJS.enc.Hex),
-                        salt: salt.toString(CryptoJS.enc.Hex),
-                        hmac: hmac.toString(CryptoJS.enc.Hex)
+                        iv: Array.from(iv).map(b => b.toString(16).padStart(2,'0')).join(''),
+                        salt: Array.from(salt).map(b => b.toString(16).padStart(2,'0')).join('')
                     };
 
                     const elapsed = Math.round(performance.now() - startTime);
@@ -799,12 +659,8 @@
                     this.el.processingTime.textContent = `${elapsed} ms`;
                     this.el.operationStatus.textContent = '加密成功';
                     this.el.operationStatus.className = 'text-green-600 font-medium';
-
-                    [this.el.downloadButton, this.el.showDetailsButton].forEach(b => b.classList.remove('hidden'));
-                    if (isBase) {
-                        this.el.copyButton.classList.remove('hidden');
-                    }
-
+                    this.el.downloadButton.classList.remove('hidden');
+                    this.el.showDetailsButton.classList.remove('hidden');
                     this.showMessage('加密成功', 'success');
                 } catch (e) {
                     this.showMessage('加密失败：' + e.message, 'error');
@@ -812,136 +668,93 @@
                     this.hideLoading();
                 }
             }
-
             async handleDecrypt() {
                 if (this.isProcessing) return;
                 this.mode = 'decrypt';
                 this.updateUI();
-
                 const startTime = performance.now();
-
                 try {
                     this.showLoading();
-
                     let combined;
                     if (this.importedFile) {
-                        const arrayBuffer = await this.importedFile.arrayBuffer();
-                        const buf = new Uint8Array(arrayBuffer);
-                        if (buf[0] === MAGIC_BYTE) {
+                        const buf = new Uint8Array(await this.importedFile.arrayBuffer());
+                        if (buf.length > 1 && buf[0] === MAGIC_BYTE && buf[1] === CURRENT_VERSION) {
                             combined = buf;
                         } else {
                             const text = new TextDecoder().decode(buf);
                             if (looksLikeCustomBase(text)) {
                                 combined = customBaseDecode(text.trim());
                             } else {
-                                combined = buf;
+                                throw new Error('无法识别的文件格式');
                             }
                         }
                     } else {
                         const input = this.el.inputText.value.trim();
-                        if (!input) throw new Error('请输入密文或导入.enc文件');
+                        if (!input) throw new Error('请输入密文或导入文件');
                         combined = customBaseDecode(input);
                     }
 
-                    if (combined.length < 71) throw new Error('密文长度异常，可能已损坏');
-
+                    if (combined.length < 61) throw new Error('密文太短，可能已损坏');
                     let offset = 0;
-                    const magic = combined[offset++];
-                    if (magic !== MAGIC_BYTE) throw new Error('非法密文：缺少magic byte');
-
+                    if (combined[offset++] !== MAGIC_BYTE) throw new Error('非法密文：magic byte错误');
                     const version = combined[offset++];
-                    if (version > CURRENT_VERSION) throw new Error(`不支持的密文版本：${version}`);
-                    if (version < 1) throw new Error('无效版本');
+                    if (version !== CURRENT_VERSION) throw new Error(`不支持的版本：${version}（当前工具支持版本${CURRENT_VERSION}）`);
 
-                    let mimeLen = 0;
-                    if (version >= 2) {
-                        mimeLen = combined[offset++];
-                        if (mimeLen > MAX_MIME_LEN) throw new Error('非法密文：MIME长度异常');
-                    }
-
-                    const iterations = new DataView(
-                        combined.buffer,
-                        combined.byteOffset + offset,
-                        4
-                    ).getUint32(0, false);
-                    if (iterations < MIN_ITERATIONS || iterations > MAX_ITERATIONS) throw new Error('非法密文：迭代次数异常');
+                    const mimeLen = combined[offset++];
+                    const iterations = new DataView(combined.buffer, combined.byteOffset + offset, 4).getUint32(0, false);
                     offset += 4;
+                    const salt = combined.slice(offset, offset + 16); offset += 16;
+                    const iv = combined.slice(offset, offset + 12); offset += 12;
 
-                    const salt = CryptoJS.lib.WordArray.create(
-                        combined.subarray(offset, offset + 16)
-                    );
-                    offset += 16;
+                    const mimeType = mimeLen > 0 ? new TextDecoder().decode(combined.slice(offset, offset + mimeLen)) : 'application/octet-stream';
+                    offset += mimeLen;
 
-                    const iv = CryptoJS.lib.WordArray.create(
-                        combined.subarray(offset, offset + 16)
-                    );
-                    offset += 16;
-
-                    let mimeType = 'application/octet-stream';
-                    if (mimeLen > 0) {
-                        mimeType = new TextDecoder().decode(
-                            combined.subarray(offset, offset + mimeLen)
-                        );
-                        offset += mimeLen;
+                    if (combined[offset++] !== SEPARATOR_BYTE) {
+                        throw new Error('密文结构错误：MIME分隔符缺失或损坏');
                     }
+
+                    const ciphertextWithTag = combined.slice(offset);
+                    if (ciphertextWithTag.length < 16) throw new Error('密文数据过短');
 
                     const password = this.getPassword();
-                    const { aesKey, hmacKey } = deriveKeys(password, salt, iterations);
+                    const key = await deriveKey(password, salt, iterations);
 
-                    const hmacReceivedBytes = combined.slice(-32);
-                    const hmacReceived = CryptoJS.lib.WordArray.create(hmacReceivedBytes);
+                    const decrypted = await crypto.subtle.decrypt(
+                        { name: "AES-GCM", iv: iv },
+                        key,
+                        ciphertextWithTag
+                    );
 
-                    const ciphertextBytes = combined.subarray(offset, -32);
-                    if (ciphertextBytes.length === 0) throw new Error('非法密文：无有效密文数据');
-
-                    const ciphertext = CryptoJS.lib.WordArray.create(ciphertextBytes);
-
-                    const headerLength = offset;
-                    const macBytes = new Uint8Array(headerLength + ciphertextBytes.length);
-                    macBytes.set(combined.subarray(0, headerLength), 0);
-                    macBytes.set(ciphertextBytes, headerLength);
-
-                    const hmacCalc = CryptoJS.HmacSHA256(CryptoJS.lib.WordArray.create(macBytes), hmacKey);
-                    const hmacCalcBytes = wordArrayToUint8Array(hmacCalc);
-
-                    if (!constantTimeCompare(hmacCalcBytes, hmacReceivedBytes)) {
-                        throw new Error('HMAC校验失败：密文被篡改或密码错误');
-                    }
-
-                    const decrypted = CryptoJS.AES.decrypt({ ciphertext }, aesKey, {
-                        iv: iv,
-                        mode: CryptoJS.mode.CBC,
-                        padding: CryptoJS.pad.Pkcs7
-                    });
-
-                    const plaintextBytes = wordArrayToUint8Array(decrypted);
+                    const plaintextBytes = new Uint8Array(decrypted);
 
                     this.displayOutput(plaintextBytes, mimeType);
 
-                    let originalName = this.importedFile ? this.importedFile.name.replace(/\.enc(\.txt)?$/i, '') : getTimestampFilename('decrypted', '.txt');
-                    if (!originalName.match(/\.\w+$/)) {
-                        const extMap = {
-                            'image/jpeg': '.jpg',
-                            'image/png': '.png',
-                            'image/gif': '.gif',
-                            'application/zip': '.zip',
-                            'application/x-rar-compressed': '.rar',
-                            'text/plain': '.txt'
-                        };
-                        originalName += extMap[mimeType] || '.bin';
+                    let baseName = 'decrypted';
+                    if (this.importedFile) {
+                        baseName = this.importedFile.name
+                            .replace(/\.enc\.txt$/i, '')
+                            .replace(/\.enc$/i, '');
                     }
-                    this.lastFileName = originalName;
+
+                    let ext = getExtensionFromMime(mimeType);
+                    if (mimeType === 'application/octet-stream' && isLikelyText(plaintextBytes)) {
+                        ext = '.txt';
+                    }
+
+                    if (/\.\w+$/.test(baseName)) {
+                        this.lastFileName = baseName;
+                    } else {
+                        this.lastFileName = baseName + ext;
+                    }
 
                     this.lastOutputBytes = plaintextBytes;
                     this.lastMime = mimeType;
-
                     this.lastResult = {
-                        version,
+                        version: CURRENT_VERSION,
                         iterations,
                         mime: mimeType,
-                        iv: iv.toString(CryptoJS.enc.Hex),
-                        salt: salt.toString(CryptoJS.enc.Hex),
-                        hmac: hmacReceived.toString(CryptoJS.enc.Hex)
+                        iv: Array.from(iv).map(b=>b.toString(16).padStart(2,'0')).join(''),
+                        salt: Array.from(salt).map(b=>b.toString(16).padStart(2,'0')).join('')
                     };
 
                     const elapsed = Math.round(performance.now() - startTime);
@@ -949,7 +762,6 @@
                     this.el.processingTime.textContent = `${elapsed} ms`;
                     this.el.operationStatus.textContent = '解密成功';
                     this.el.operationStatus.className = 'text-green-600 font-medium';
-
                     this.showMessage('解密成功', 'success');
                 } catch (e) {
                     this.showMessage('解密失败：' + e.message, 'error');
@@ -957,12 +769,11 @@
                     this.hideLoading();
                 }
             }
-
             handleClear() {
                 this.el.useCustomKey.checked = false;
                 this.el.keyInput.value = '';
                 this.el.saltInput.value = '';
-                this.el.iterationsInput.value = 50000;
+                this.el.iterationsInput.value = 200000;
                 this.el.outputFormat.value = 'base';
                 this.el.inputText.value = '';
                 this.el.outputText.value = '';
@@ -984,30 +795,24 @@
                 this.el.toggleAdvanced.textContent = '显示高级选项';
                 this.showMessage('已清空', 'info');
             }
-
             copyResult() {
                 navigator.clipboard.writeText(this.el.outputText.value).then(() => this.showMessage('已复制', 'success'));
             }
-
             copyAll() {
                 navigator.clipboard.writeText(this.el.outputText.value).then(() => this.showMessage('已复制全部', 'success'));
             }
-
             showDetails() {
                 if (!this.lastResult) return;
-                this.el.modalVersion.textContent = this.lastResult.version || '-';
-                this.el.modalIterations.textContent = this.lastResult.iterations || '-';
-                this.el.modalMime.textContent = this.lastResult.mime || '-';
-                this.el.modalIV.textContent = this.lastResult.iv || '-';
-                this.el.modalSalt.textContent = this.lastResult.salt || '-';
-                this.el.modalHmac.textContent = this.lastResult.hmac || '-';
+                this.el.modalVersion.textContent = this.lastResult.version;
+                this.el.modalIterations.textContent = this.lastResult.iterations;
+                this.el.modalMime.textContent = this.lastResult.mime;
+                this.el.modalIV.textContent = this.lastResult.iv;
+                this.el.modalSalt.textContent = this.lastResult.salt;
                 this.el.detailsModal.classList.remove('hidden');
             }
-
             hideDetails() {
                 this.el.detailsModal.classList.add('hidden');
             }
-
             showMessage(msg, type = 'info') {
                 const el = document.createElement('div');
                 el.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 text-white font-medium`;
