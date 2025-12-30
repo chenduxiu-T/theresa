@@ -113,7 +113,16 @@
                     <label class="block text-sm font-medium text-gray-600 mb-1">迭代次数</label>
                     <input id="iterationsInput" type="number" value="50000" min="1000" max="200000"
                            class="w-full p-2 border rounded-md">
-                    <p class="text-xs text-gray-500 mt-1">默认50000，平衡安全与性能</p>
+                    <p class="text-xs text-gray-500 mt-1">默认50000，范围1000-200000</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">输出格式</label>
+                    <select id="outputFormat" class="w-full p-2 border rounded-md">
+                        <option value="base">日文Base文本（默认）</option>
+                        <option value="binary">二进制.enc文件（适合大文件/图片）</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">大文件建议用二进制格式</p>
                 </div>
             </div>
            
@@ -123,16 +132,15 @@
         <!-- 输入区域 -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-2">
-                <label id="inputLabel" class="block text-sm font-medium text-gray-600">输入明文</label>
+                <label id="inputLabel" class="block text-sm font-medium text-gray-600">输入明文或图片</label>
                 <span id="charCount" class="text-sm text-gray-500">0 字符</span>
             </div>
             <textarea id="inputText" rows="5"
                       class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                      placeholder="加密请输入明文，解密请输入日文密文"
-                      required></textarea>
+                      placeholder="加密请输入明文或导入文件，解密请输入日文密文或导入.enc文件"></textarea>
             <div class="mt-2">
                 <label class="bg-gray-200 px-4 py-2 rounded cursor-pointer hover:bg-gray-300 inline-block">
-                    📁 导入文件 <input type="file" id="importFile" class="hidden" accept=".txt">
+                    📁 导入文件（支持图片/文本/.enc） <input type="file" id="importFile" class="hidden" accept=".txt,image/*,.enc,*/*">
                 </label>
             </div>
             <p id="inputInfo" class="text-sm text-gray-500 mt-1"></p>
@@ -157,14 +165,17 @@
         <!-- 结果区域 -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-2">
-                <label id="outputLabel" class="block text-sm font-medium text-gray-600">密文结果</label>
+                <label id="outputLabel" class="block text-sm font-medium text-gray-600">结果</label>
                 <button id="copyAllButton" class="text-sm text-blue-600 hover:text-blue-800 hidden">
                     复制全部
                 </button>
             </div>
-            <textarea id="outputText" rows="5"
-                      class="w-full p-4 border rounded-lg bg-gray-50 font-mono text-base"
-                      readonly placeholder="加密或解密结果将显示在这里"></textarea>
+            <div id="outputContainer" class="w-full border rounded-lg bg-gray-50 overflow-hidden">
+                <textarea id="outputText" rows="5"
+                          class="w-full p-4 font-mono text-base hidden"
+                          readonly placeholder="结果将显示在这里"></textarea>
+                <img id="outputImage" class="max-w-full h-auto hidden" alt="解密图片预览">
+            </div>
             <div id="outputInfo" class="mt-3 space-y-2">
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600">操作状态：</span>
@@ -206,16 +217,16 @@
                 </div>
                 <div class="space-y-3">
                     <div>
-                        <span class="text-sm text-gray-600">算法：</span>
-                        <span class="text-sm font-mono">AES-256-CBC + HMAC-SHA256</span>
-                    </div>
-                    <div>
                         <span class="text-sm text-gray-600">版本：</span>
-                        <span id="modalVersion" class="text-sm font-mono">1</span>
+                        <span id="modalVersion" class="text-sm font-mono">2</span>
                     </div>
                     <div>
                         <span class="text-sm text-gray-600">迭代次数：</span>
                         <span id="modalIterations" class="text-sm font-mono">-</span>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">MIME类型：</span>
+                        <span id="modalMime" class="text-sm font-mono">-</span>
                     </div>
                     <div>
                         <span class="text-sm text-gray-600">IV：</span>
@@ -235,8 +246,11 @@
     </div>
 
     <script>
-        const VERSION = 1;
-        const DEFAULT_ITERATIONS = 50000;
+        const CURRENT_VERSION = 2;
+        const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB
+        const MAX_ITERATIONS = 200000;
+        const MIN_ITERATIONS = 1000;
+        const MAX_MIME_LEN = 255;
 
         const customAlphabet = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわゐゑをんアイウエオカキクケコサシスセソタ';
         const paddingChar = 'ン';
@@ -269,6 +283,11 @@
 
         function customBaseDecode(str) {
             if (str.length % 4 !== 0) throw new Error('密文长度必须为4的倍数');
+
+            const padIndex = str.indexOf(paddingChar);
+            if (padIndex !== -1 && !str.slice(padIndex).match(/^ン{0,2}$/)) {
+                throw new Error('非法密文：padding 位置或数量错误');
+            }
 
             let padding = 0;
             if (str.endsWith(paddingChar + paddingChar)) padding = 2;
@@ -310,16 +329,24 @@
             return bytes;
         }
 
+        function constantTimeCompare(a, b) {
+            if (a.length !== b.length) return false;
+            let result = 0;
+            for (let i = 0; i < a.length; i++) {
+                result |= a[i] ^ b[i];
+            }
+            return result === 0;
+        }
+
         function deriveKeys(password, salt, iterations) {
             const master = CryptoJS.PBKDF2(password, salt, {
-                keySize: 256 / 32,
+                keySize: 512 / 32,
                 iterations: iterations,
                 hasher: CryptoJS.algo.SHA256
             });
-            const aesKeyStr = CryptoJS.HmacSHA256("AES", master).toString().slice(0, 64);
-            const hmacKeyStr = CryptoJS.HmacSHA256("HMAC", master).toString().slice(0, 64);
-            const aesKey = CryptoJS.enc.Hex.parse(aesKeyStr);
-            const hmacKey = CryptoJS.enc.Hex.parse(hmacKeyStr);
+            const masterBytes = wordArrayToUint8Array(master);
+            const aesKey = CryptoJS.enc.Hex.parse(Array.from(masterBytes.subarray(0, 32)).map(b => b.toString(16).padStart(2, '0')).join(''));
+            const hmacKey = CryptoJS.enc.Hex.parse(Array.from(masterBytes.subarray(32, 64)).map(b => b.toString(16).padStart(2, '0')).join(''));
             return { aesKey, hmacKey };
         }
 
@@ -343,6 +370,8 @@
                 this.mode = 'encrypt';
                 this.isProcessing = false;
                 this.lastResult = null;
+                this.importedFile = null;
+                this.inputMime = 'text/plain';
                 this.initElements();
                 this.bindEvents();
                 this.updateUI();
@@ -365,6 +394,8 @@
                     importFile: document.getElementById('importFile'),
 
                     outputText: document.getElementById('outputText'),
+                    outputImage: document.getElementById('outputImage'),
+                    outputContainer: document.getElementById('outputContainer'),
                     outputLabel: document.getElementById('outputLabel'),
 
                     encryptButton: document.getElementById('encryptButton'),
@@ -385,12 +416,14 @@
                     advancedOptions: document.getElementById('advancedOptions'),
                     saltInput: document.getElementById('saltInput'),
                     iterationsInput: document.getElementById('iterationsInput'),
+                    outputFormat: document.getElementById('outputFormat'),
 
                     detailsModal: document.getElementById('detailsModal'),
                     modalBackdrop: document.getElementById('modalBackdrop'),
                     closeModal: document.getElementById('closeModal'),
                     modalVersion: document.getElementById('modalVersion'),
                     modalIterations: document.getElementById('modalIterations'),
+                    modalMime: document.getElementById('modalMime'),
                     modalIV: document.getElementById('modalIV'),
                     modalSalt: document.getElementById('modalSalt'),
                     modalHmac: document.getElementById('modalHmac')
@@ -436,7 +469,7 @@
                 this.el.keyStrengthBar.style.width = strength.percent + '%';
                 this.el.keyStrengthText.textContent = `强度：${strength.text}`;
                 this.el.keyStrengthText.className = `ml-2 text-xs font-medium ${strength.color}`;
-                this.el.keyInfo.textContent = this.el.useCustomKey.checked ? '' : '使用默认密钥 + PBKDF2 + HMAC 增强';
+                this.el.keyInfo.textContent = this.el.useCustomKey.checked ? '' : '';
             }
 
             updateCharCount() {
@@ -446,10 +479,19 @@
 
             handleFileImport(e) {
                 const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => { this.el.inputText.value = ev.target.result; this.updateCharCount(); };
-                reader.readAsText(file);
+                if (!file) {
+                    this.importedFile = null;
+                    this.inputMime = 'text/plain';
+                    this.el.inputInfo.textContent = '';
+                    this.el.inputText.value = '';
+                    this.el.charCount.textContent = '0 字符';
+                    return;
+                }
+                this.importedFile = file;
+                this.inputMime = file.type || 'application/octet-stream';
+                this.el.inputText.value = '';
+                this.el.charCount.textContent = '';
+                this.el.inputInfo.textContent = `已导入：${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
             }
 
             toggleAdvanced() {
@@ -472,8 +514,8 @@
 
             updateUI() {
                 this.el.modeText.textContent = this.mode === 'encrypt' ? '当前模式：加密' : '当前模式：解密';
-                this.el.inputLabel.textContent = this.mode === 'encrypt' ? '输入明文' : '输入密文';
-                this.el.outputLabel.textContent = this.mode === 'encrypt' ? '密文结果' : '明文结果';
+                this.el.inputLabel.textContent = this.mode === 'encrypt' ? '输入明文或文件' : '输入密文或导入.enc';
+                this.el.outputLabel.textContent = this.mode === 'encrypt' ? '密文结果' : '明文/文件结果';
 
                 [this.el.encryptButton, this.el.decryptButton, this.el.clearButton].forEach(b => b.disabled = this.isProcessing);
             }
@@ -498,7 +540,45 @@
             }
 
             getIterations() {
-                return parseInt(this.el.iterationsInput.value) || DEFAULT_ITERATIONS;
+                const val = parseInt(this.el.iterationsInput.value);
+                if (isNaN(val) || val < MIN_ITERATIONS || val > MAX_ITERATIONS) {
+                    throw new Error(`迭代次数必须在 ${MIN_ITERATIONS} - ${MAX_ITERATIONS} 之间`);
+                }
+                return val;
+            }
+
+            async getInputBytes() {
+                if (this.importedFile) {
+                    const arrayBuffer = await this.importedFile.arrayBuffer();
+                    return new Uint8Array(arrayBuffer);
+                }
+                const text = this.el.inputText.value.trim();
+                if (!text) throw new Error('请输入内容或导入文件');
+                return new TextEncoder().encode(text);
+            }
+
+            displayOutput(bytes, mimeType) {
+                this.el.outputText.classList.add('hidden');
+                this.el.outputImage.classList.add('hidden');
+
+                const isImage = mimeType.startsWith('image/');
+                if (isImage) {
+                    const blob = new Blob([bytes], { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    this.el.outputImage.src = url;
+                    this.el.outputImage.classList.remove('hidden');
+                } else {
+                    try {
+                        const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+                        this.el.outputText.value = text;
+                        this.el.outputText.classList.remove('hidden');
+                    } catch {
+                        throw new Error('解密失败：内容不是有效UTF-8文本（密码错误或密文损坏）');
+                    }
+                }
+                [this.el.copyButton, this.el.downloadButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.remove('hidden'));
+                this.el.copyButton.classList.toggle('hidden', isImage);
+                this.el.copyAllButton.classList.toggle('hidden', isImage);
             }
 
             async handleEncrypt() {
@@ -506,56 +586,99 @@
                 this.mode = 'encrypt';
                 this.updateUI();
 
-                const text = this.el.inputText.value.trim();
-                if (!text) return this.showMessage('请输入明文', 'error');
-
                 const startTime = performance.now();
 
                 try {
                     this.showLoading();
 
+                    const inputBytes = await this.getInputBytes();
+
+                    if (inputBytes.length > LARGE_FILE_THRESHOLD && this.el.outputFormat.value === 'base') {
+                        if (!confirm(`文件较大(${ (inputBytes.length / 1024 / 1024).toFixed(2) }MB)，日文Base格式会膨胀约37%。建议切换为二进制.enc格式，是否继续使用日文Base？`)) {
+                            this.el.outputFormat.value = 'binary';
+                        }
+                    }
+
                     const password = this.getPassword();
                     const salt = this.getSalt();
-                    const iterations = this.getIterations();
+                    const iterations = this.getIterations();  // 已包含范围校验
+
                     const iv = CryptoJS.lib.WordArray.random(16);
 
                     const { aesKey, hmacKey } = deriveKeys(password, salt, iterations);
 
-                    const encrypted = CryptoJS.AES.encrypt(text, aesKey, {
+                    const ciphertextWA = CryptoJS.AES.encrypt(CryptoJS.lib.WordArray.create(inputBytes), aesKey, {
                         iv: iv,
                         mode: CryptoJS.mode.CBC,
                         padding: CryptoJS.pad.Pkcs7
-                    });
+                    }).ciphertext;
 
-                    const header = new Uint8Array(1 + 4 + 16 + 16);
-                    header[0] = VERSION;
-                    new DataView(header.buffer, 1, 4).setUint32(0, iterations, false);
-                    header.set(wordArrayToUint8Array(salt), 5);
-                    header.set(wordArrayToUint8Array(iv), 21);
+                    const ciphertextBytes = wordArrayToUint8Array(ciphertextWA);
 
-                    const ciphertextBytes = wordArrayToUint8Array(encrypted.ciphertext);
+                    const mimeBytes = new TextEncoder().encode(this.inputMime);
+                    let mimeLen = mimeBytes.length;
+                    if (mimeLen > MAX_MIME_LEN) mimeLen = MAX_MIME_LEN;
+
+                    const header = new Uint8Array(1 + 1 + 4 + 16 + 16 + mimeLen);
+                    let pos = 0;
+                    header[pos++] = CURRENT_VERSION;
+                    header[pos++] = mimeLen;
+                    new DataView(header.buffer, pos, 4).setUint32(0, iterations, false);
+                    pos += 4;
+                    header.set(wordArrayToUint8Array(salt), pos);
+                    pos += 16;
+                    header.set(wordArrayToUint8Array(iv), pos);
+                    pos += 16;
+                    header.set(mimeBytes.slice(0, mimeLen), pos);
+
                     const macBytes = new Uint8Array(header.length + ciphertextBytes.length);
                     macBytes.set(header, 0);
                     macBytes.set(ciphertextBytes, header.length);
 
                     const hmac = CryptoJS.HmacSHA256(CryptoJS.lib.WordArray.create(macBytes), hmacKey);
-
                     const hmacBytes = wordArrayToUint8Array(hmac);
+
                     const combined = new Uint8Array(header.length + ciphertextBytes.length + 32);
                     combined.set(header, 0);
                     combined.set(ciphertextBytes, header.length);
                     combined.set(hmacBytes, header.length + ciphertextBytes.length);
 
-                    const cipher = customBaseEncode(combined);
+                    const outputFormat = this.el.outputFormat.value;
 
-                    this.el.outputText.value = cipher;
+                    if (outputFormat === 'base') {
+                        const cipher = customBaseEncode(combined);
+                        this.el.outputText.value = cipher;
+                        this.el.outputText.classList.remove('hidden');
+                        this.el.outputImage.classList.add('hidden');
+                        this.el.downloadButton.onclick = () => {
+                            const blob = new Blob([cipher], { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = this.importedFile ? this.importedFile.name + '.enc.txt' : 'encrypted.txt';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        };
+                    } else {
+                        const blob = new Blob([combined], { type: 'application/octet-stream' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = this.importedFile ? this.importedFile.name + '.enc' : 'encrypted.enc';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        this.el.outputText.value = '[二进制文件已直接下载]';
+                        this.el.outputText.classList.remove('hidden');
+                        this.el.downloadButton.classList.add('hidden');
+                    }
+
                     this.lastResult = {
-                        cipher,
+                        version: CURRENT_VERSION,
+                        iterations,
+                        mime: this.inputMime,
                         iv: iv.toString(CryptoJS.enc.Hex),
                         salt: salt.toString(CryptoJS.enc.Hex),
-                        iterations,
-                        hmac: hmac.toString(CryptoJS.enc.Hex),
-                        version: VERSION
+                        hmac: hmac.toString(CryptoJS.enc.Hex)
                     };
 
                     const elapsed = Math.round(performance.now() - startTime);
@@ -564,7 +687,7 @@
                     this.el.operationStatus.textContent = '加密成功';
                     this.el.operationStatus.className = 'text-green-600 font-medium';
 
-                    [this.el.copyButton, this.el.downloadButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.remove('hidden'));
+                    [this.el.copyButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.remove('hidden'));
 
                     this.showMessage('加密成功', 'success');
                 } catch (e) {
@@ -579,52 +702,91 @@
                 this.mode = 'decrypt';
                 this.updateUI();
 
-                let input = this.el.inputText.value.trim();
-                if (!input) return this.showMessage('请输入密文', 'error');
-
                 const startTime = performance.now();
 
                 try {
                     this.showLoading();
 
-                    const decoded = customBaseDecode(input);
-                    if (decoded.length < 1 + 4 + 16 + 16 + 32 + 16) throw new Error('密文太短或格式错误');
+                    let combined;
+                    if (this.importedFile) {
+                        const arrayBuffer = await this.importedFile.arrayBuffer();
+                        combined = new Uint8Array(arrayBuffer);
+                    } else {
+                        const input = this.el.inputText.value.trim();
+                        if (!input) throw new Error('请输入密文或导入.enc文件');
+                        try {
+                            combined = customBaseDecode(input);
+                        } catch {
+                            throw new Error('不是有效的日文Base密文');
+                        }
+                    }
+
+                    if (combined.length < 70) throw new Error('密文长度异常，可能已损坏');
 
                     let offset = 0;
-                    const version = decoded[offset++];
-                    if (version !== VERSION) throw new Error(`不支持的密文版本：${version}`);
 
-                    const iterArray = decoded.subarray(offset, offset + 4);
-                    const iterations = new DataView(iterArray.buffer, iterArray.byteOffset, 4).getUint32(0, false);
+                    // 1️⃣ version
+                    const version = combined[offset++];
+                    if (version > CURRENT_VERSION) throw new Error(`不支持的密文版本：${version}`);
+                    if (version < 1) throw new Error('无效版本');
+
+                    // 2️⃣ mimeLen
+                    let mimeLen = 0;
+                    if (version >= 2) {
+                        mimeLen = combined[offset++];
+                        if (mimeLen > MAX_MIME_LEN) throw new Error('非法密文：MIME长度异常');
+                    }
+
+                    // 3️⃣ iterations
+                    const iterations = new DataView(
+                        combined.buffer,
+                        combined.byteOffset + offset,
+                        4
+                    ).getUint32(0, false);
+                    if (iterations < MIN_ITERATIONS || iterations > MAX_ITERATIONS) throw new Error('非法密文：迭代次数异常');
                     offset += 4;
 
-                    const salt = CryptoJS.lib.WordArray.create(decoded.subarray(offset, offset + 16));
+                    // 4️⃣ salt
+                    const salt = CryptoJS.lib.WordArray.create(
+                        combined.subarray(offset, offset + 16)
+                    );
                     offset += 16;
-                    const iv = CryptoJS.lib.WordArray.create(decoded.subarray(offset, offset + 16));
+
+                    // 5️⃣ iv
+                    const iv = CryptoJS.lib.WordArray.create(
+                        combined.subarray(offset, offset + 16)
+                    );
                     offset += 16;
+
+                    // 6️⃣ mime
+                    let mimeType = 'text/plain';
+                    if (mimeLen > 0) {
+                        mimeType = new TextDecoder().decode(
+                            combined.subarray(offset, offset + mimeLen)
+                        );
+                        offset += mimeLen;
+                    }
 
                     const password = this.getPassword();
                     const { aesKey, hmacKey } = deriveKeys(password, salt, iterations);
 
-                    const hmacBytes = decoded.slice(decoded.length - 32);
-                    const hmacReceived = CryptoJS.lib.WordArray.create(hmacBytes);
+                    const hmacReceivedBytes = combined.slice(-32);
+                    const hmacReceived = CryptoJS.lib.WordArray.create(hmacReceivedBytes);
 
-                    const ciphertextBytes = decoded.subarray(offset, decoded.length - 32);
+                    const ciphertextBytes = combined.subarray(offset, -32);
+                    if (ciphertextBytes.length === 0) throw new Error('非法密文：无有效密文数据');
+
                     const ciphertext = CryptoJS.lib.WordArray.create(ciphertextBytes);
 
-                    const header = new Uint8Array(1 + 4 + 16 + 16);
-                    header[0] = version;
-                    header.set(iterArray, 1);
-                    header.set(wordArrayToUint8Array(salt), 5);
-                    header.set(wordArrayToUint8Array(iv), 21);
-
-                    const macBytes = new Uint8Array(header.length + ciphertextBytes.length);
-                    macBytes.set(header, 0);
-                    macBytes.set(ciphertextBytes, header.length);
+                    const headerLength = offset;
+                    const macBytes = new Uint8Array(headerLength + ciphertextBytes.length);
+                    macBytes.set(combined.subarray(0, headerLength), 0);
+                    macBytes.set(ciphertextBytes, headerLength);
 
                     const hmacCalc = CryptoJS.HmacSHA256(CryptoJS.lib.WordArray.create(macBytes), hmacKey);
+                    const hmacCalcBytes = wordArrayToUint8Array(hmacCalc);
 
-                    if (hmacCalc.toString(CryptoJS.enc.Hex) !== hmacReceived.toString(CryptoJS.enc.Hex)) {
+                    if (!constantTimeCompare(hmacCalcBytes, hmacReceivedBytes)) {
                         throw new Error('HMAC校验失败：密文被篡改或密码错误');
                     }
 
@@ -634,26 +796,24 @@
                         padding: CryptoJS.pad.Pkcs7
                     });
 
-                    const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
-                    if (!plaintext) throw new Error('解密失败：密码错误或密文损坏');
+                    const plaintextBytes = wordArrayToUint8Array(decrypted);
 
-                    this.el.outputText.value = plaintext;
+                    this.displayOutput(plaintextBytes, mimeType);
+
                     this.lastResult = {
-                        plaintext,
+                        version,
+                        iterations,
+                        mime: mimeType,
                         iv: iv.toString(CryptoJS.enc.Hex),
                         salt: salt.toString(CryptoJS.enc.Hex),
-                        iterations,
-                        hmac: hmacReceived.toString(CryptoJS.enc.Hex),
-                        version
+                        hmac: hmacReceived.toString(CryptoJS.enc.Hex)
                     };
 
                     const elapsed = Math.round(performance.now() - startTime);
-                    this.el.dataSize.textContent = `${decoded.length} 字节`;
+                    this.el.dataSize.textContent = `${combined.length} 字节`;
                     this.el.processingTime.textContent = `${elapsed} ms`;
                     this.el.operationStatus.textContent = '解密成功';
                     this.el.operationStatus.className = 'text-green-600 font-medium';
-
-                    [this.el.copyButton, this.el.downloadButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.remove('hidden'));
 
                     this.showMessage('解密成功', 'success');
                 } catch (e) {
@@ -667,13 +827,21 @@
                 this.el.useCustomKey.checked = false;
                 this.el.keyInput.value = '';
                 this.el.saltInput.value = '';
-                this.el.iterationsInput.value = DEFAULT_ITERATIONS;
+                this.el.iterationsInput.value = 50000;
+                this.el.outputFormat.value = 'base';
                 this.el.inputText.value = '';
                 this.el.outputText.value = '';
+                this.el.outputImage.src = '';
+                this.el.outputText.classList.add('hidden');
+                this.el.outputImage.classList.add('hidden');
                 this.el.charCount.textContent = '0 字符';
                 this.el.dataSize.textContent = '-';
                 this.el.processingTime.textContent = '-';
                 this.el.operationStatus.textContent = '就绪';
+                this.el.inputInfo.textContent = '';
+                this.el.importFile.value = '';
+                this.importedFile = null;
+                this.inputMime = 'text/plain';
                 [this.el.copyButton, this.el.downloadButton, this.el.showDetailsButton, this.el.copyAllButton].forEach(b => b.classList.add('hidden'));
                 this.toggleKeyInput();
                 this.el.advancedOptions.classList.add('hidden');
@@ -686,27 +854,21 @@
             }
 
             copyAll() {
-                const text = this.mode === 'encrypt' ? `密文：\n${this.el.outputText.value}` : `明文：\n${this.el.outputText.value}`;
-                navigator.clipboard.writeText(text).then(() => this.showMessage('已复制全部', 'success'));
+                navigator.clipboard.writeText(this.el.outputText.value).then(() => this.showMessage('已复制全部', 'success'));
             }
 
             downloadResult() {
-                const blob = new Blob([this.el.outputText.value], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = this.mode === 'encrypt' ? 'encrypted.txt' : 'decrypted.txt';
-                a.click();
-                URL.revokeObjectURL(url);
+                // 已在上层动态设置
             }
 
             showDetails() {
                 if (!this.lastResult) return;
-                this.el.modalVersion.textContent = this.lastResult.version;
-                this.el.modalIterations.textContent = this.lastResult.iterations;
-                this.el.modalIV.textContent = this.lastResult.iv;
-                this.el.modalSalt.textContent = this.lastResult.salt;
-                this.el.modalHmac.textContent = this.lastResult.hmac;
+                this.el.modalVersion.textContent = this.lastResult.version || '-';
+                this.el.modalIterations.textContent = this.lastResult.iterations || '-';
+                this.el.modalMime.textContent = this.lastResult.mime || '-';
+                this.el.modalIV.textContent = this.lastResult.iv || '-';
+                this.el.modalSalt.textContent = this.lastResult.salt || '-';
+                this.el.modalHmac.textContent = this.lastResult.hmac || '-';
                 this.el.detailsModal.classList.remove('hidden');
             }
 
