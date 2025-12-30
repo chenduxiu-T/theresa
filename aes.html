@@ -16,7 +16,7 @@
         }
        
         .glass {
-            background: rgba(255, 255, 255, 0.50);
+            background: rgba(255, 255, 255, 0.10);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
@@ -128,7 +128,7 @@
             </div>
             <textarea id="inputText" rows="5"
                       class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                      placeholder="加密请输入明文，解密请输入日文密文（仅含平假名、片假名和'ン'）"
+                      placeholder="加密请输入明文，解密请输入日文密文"
                       required></textarea>
             <div class="mt-2">
                 <label class="bg-gray-200 px-4 py-2 rounded cursor-pointer hover:bg-gray-300 inline-block">
@@ -140,15 +140,15 @@
        
         <!-- 操作按钮 -->
         <div class="flex flex-wrap justify-center gap-3 mb-6">
-            <button id="encryptButton" class="flex-1 min-w-[120px] bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-all font-medium flex items-center justify-center">
+            <button id="encryptButton" class="flex-1 min-w-[120px] bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 active:bg-blue-600 focus:bg-blue-600 focus:outline-none transition-all font-medium flex items-center justify-center">
                 <span>🔒</span>
                 <span class="ml-2">加密</span>
             </button>
-            <button id="decryptButton" class="flex-1 min-w-[120px] bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-all font-medium flex items-center justify-center">
+            <button id="decryptButton" class="flex-1 min-w-[120px] bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 active:bg-green-600 focus:bg-green-600 focus:outline-none transition-all font-medium flex items-center justify-center">
                 <span>🔓</span>
                 <span class="ml-2">解密</span>
             </button>
-            <button id="clearButton" class="flex-1 min-w-[120px] bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition-all font-medium flex items-center justify-center">
+            <button id="clearButton" class="flex-1 min-w-[120px] bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 active:bg-gray-500 focus:bg-gray-500 focus:outline-none transition-all font-medium flex items-center justify-center">
                 <span>🗑️</span>
                 <span class="ml-2">清空</span>
             </button>
@@ -183,20 +183,21 @@
        
         <!-- 操作按钮组 -->
         <div class="flex flex-wrap justify-center gap-3">
-            <button id="copyButton" class="flex-1 min-w-[140px] bg-emerald-500 text-white py-3 px-4 rounded-lg hover:bg-emerald-600 transition-all hidden">
+            <button id="copyButton" class="flex-1 min-w-[140px] bg-emerald-500 text-white py-3 px-4 rounded-lg hover:bg-emerald-600 active:bg-emerald-500 focus:bg-emerald-500 focus:outline-none transition-all hidden">
                 📋 复制结果
             </button>
-            <button id="downloadButton" class="flex-1 min-w-[140px] bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-all hidden">
+            <button id="downloadButton" class="flex-1 min-w-[140px] bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 active:bg-purple-500 focus:bg-purple-500 focus:outline-none transition-all hidden">
                 ⬇️ 下载文件
             </button>
-            <button id="showDetailsButton" class="flex-1 min-w-[140px] bg-amber-500 text-white py-3 px-4 rounded-lg hover:bg-amber-600 transition-all hidden">
+            <button id="showDetailsButton" class="flex-1 min-w-[140px] bg-amber-500 text-white py-3 px-4 rounded-lg hover:bg-amber-600 active:bg-amber-500 focus:bg-amber-500 focus:outline-none transition-all hidden">
                 🔍 查看详情
             </button>
         </div>
        
         <!-- 详情模态框 -->
-        <div id="detailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="glass rounded-xl p-6 max-w-lg w-full mx-4">
+        <div id="detailsModal" class="hidden fixed inset-0 flex items-center justify-center z-50">
+            <div class="absolute inset-0 bg-transparent" id="modalBackdrop"></div>
+            <div class="glass rounded-xl p-6 max-w-lg w-full mx-4 relative z-10">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-bold text-gray-800">加密详情</h3>
                     <button id="closeModal" class="text-gray-500 hover:text-gray-700">
@@ -386,6 +387,7 @@
                     iterationsInput: document.getElementById('iterationsInput'),
 
                     detailsModal: document.getElementById('detailsModal'),
+                    modalBackdrop: document.getElementById('modalBackdrop'),
                     closeModal: document.getElementById('closeModal'),
                     modalVersion: document.getElementById('modalVersion'),
                     modalIterations: document.getElementById('modalIterations'),
@@ -413,6 +415,7 @@
 
                 this.el.toggleAdvanced.addEventListener('click', () => this.toggleAdvanced());
                 this.el.closeModal.addEventListener('click', () => this.hideDetails());
+                this.el.modalBackdrop.addEventListener('click', () => this.hideDetails());
                 this.el.detailsModal.addEventListener('click', (e) => { if (e.target === this.el.detailsModal) this.hideDetails(); });
             }
 
