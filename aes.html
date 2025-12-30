@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AES-256 + 日文Base 加解密工具</title>
+    <title>AES-256 + 日文Base 加解密工具（增强版）</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -44,9 +44,26 @@
             width: 0%;
             transition: width 0.3s ease;
         }
+
+        #dragOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(59, 130, 246, 0.3);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
+    <div id="dragOverlay">拖入文件到此处导入</div>
+    
     <div class="glass rounded-xl shadow-2xl p-6 max-w-2xl w-full relative">
         <!-- 加载动画 -->
         <div id="loadingSpinner" class="loading">
@@ -201,7 +218,7 @@
                 ⬇️ 下载文件
             </button>
             <button id="redownloadButton" class="flex-1 min-w-[140px] bg-indigo-500 text-white py-3 px-4 rounded-lg hover:bg-indigo-600 active:bg-indigo-500 focus:bg-indigo-500 focus:outline-none transition-all hidden">
-                ⬇️ 下载文件
+                🔄 再次下载
             </button>
             <button id="showDetailsButton" class="flex-1 min-w-[140px] bg-amber-500 text-white py-3 px-4 rounded-lg hover:bg-amber-600 active:bg-amber-500 focus:bg-amber-500 focus:outline-none transition-all hidden">
                 🔍 查看详情
@@ -380,6 +397,7 @@
                 this.inputMime = 'text/plain';
                 this.initElements();
                 this.bindEvents();
+                this.setupDragAndDrop();
                 this.updateUI();
             }
 
@@ -433,7 +451,9 @@
                     modalMime: document.getElementById('modalMime'),
                     modalIV: document.getElementById('modalIV'),
                     modalSalt: document.getElementById('modalSalt'),
-                    modalHmac: document.getElementById('modalHmac')
+                    modalHmac: document.getElementById('modalHmac'),
+
+                    dragOverlay: document.getElementById('dragOverlay')
                 };
             }
 
@@ -458,6 +478,35 @@
                 this.el.closeModal.addEventListener('click', () => this.hideDetails());
                 this.el.modalBackdrop.addEventListener('click', () => this.hideDetails());
                 this.el.detailsModal.addEventListener('click', (e) => { if (e.target === this.el.detailsModal) this.hideDetails(); });
+            }
+
+            setupDragAndDrop() {
+                const body = document.body;
+
+                body.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    this.el.dragOverlay.style.display = 'flex';
+                });
+
+                body.addEventListener('dragleave', (e) => {
+                    if (!body.contains(e.relatedTarget)) {
+                        this.el.dragOverlay.style.display = 'none';
+                    }
+                });
+
+                body.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.el.dragOverlay.style.display = 'none';
+
+                    if (e.dataTransfer.files.length > 0) {
+                        const file = e.dataTransfer.files[0];
+                        this.importedFile = file;
+                        this.inputMime = file.type || 'application/octet-stream';
+                        this.el.inputText.value = '';
+                        this.el.charCount.textContent = '';
+                        this.el.inputInfo.textContent = `已拖入导入：${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                    }
+                });
             }
 
             toggleKeyInput() {
