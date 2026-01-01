@@ -503,6 +503,7 @@
 
             return map[mime] || '';
         }
+
         function isLikelyText(bytes) {
             try {
                 const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(0, Math.min(1024, bytes.length)));
