@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AES-256-GCM + 日文Base 加解密工具（终极完美版）</title>
+    <title>AES-256-GCM + 日文Base 加解密工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -249,8 +249,8 @@
     </div>
 
     <script>
-        const CURRENT_VERSION = 23;
-        const MAGIC_BYTE = 0xF5;
+        const CURRENT_VERSION = 25;
+        const MAGIC_BYTE = 0xF7;
         const SEPARATOR_BYTE = 0x00;
         const MAX_MIME_LEN = 255;
         const GCM_TAG_LEN = 16;
@@ -503,7 +503,6 @@
 
             return map[mime] || '';
         }
-
         function isLikelyText(bytes) {
             try {
                 const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(0, Math.min(1024, bytes.length)));
@@ -558,6 +557,7 @@
                 this.lastPlainFileName = null;
                 this.lastCipherBlob = null;
                 this.lastCipherFileName = null;
+                this.currentImageUrl = null;
                 this.initElements();
                 this.bindEvents();
                 this.setupDragAndDrop();
@@ -621,8 +621,8 @@
                 this.el.toggleKeyVisibility.addEventListener('click', () => this.toggleKeyVisibility());
                 this.el.inputText.addEventListener('input', () => this.updateCharCount());
                 this.el.importFile.addEventListener('change', (e) => this.handleFileImport(e));
-                this.el.encryptButton.addEventListener('click', () => this.handleEncrypt());
-                this.el.decryptButton.addEventListener('click', () => this.handleDecrypt());
+                this.el.encryptButton.addEventListener('click', () => this.safeOperation(this.handleEncrypt.bind(this)));
+                this.el.decryptButton.addEventListener('click', () => this.safeOperation(this.handleDecrypt.bind(this)));
                 this.el.clearButton.addEventListener('click', () => this.handleClear());
                 this.el.copyButton.addEventListener('click', () => this.copyResult());
                 this.el.downloadButton.addEventListener('click', () => this.downloadResult());
@@ -648,6 +648,18 @@
                         this.handleFileImport({ target: { files: e.dataTransfer.files } });
                     }
                 });
+            }
+
+            async safeOperation(fn) {
+                try {
+                    await fn();
+                } catch (e) {
+                    console.error('操作失败:', e);
+                    this.el.operationStatus.textContent = '✗ 操作失败';
+                    this.el.operationStatus.className = 'text-red-600 font-medium';
+                    this.showMessage(`操作失败：${e.message}`, 'error');
+                    this.hideLoading();
+                }
             }
 
             toggleKeyInput() {
@@ -771,10 +783,16 @@
                 }, 3000);
             }
 
+            updateImage(blob) {
+                if (this.currentImageUrl) {
+                    URL.revokeObjectURL(this.currentImageUrl);
+                }
+                this.currentImageUrl = URL.createObjectURL(blob);
+                this.el.outputImage.src = this.currentImageUrl;
+                this.el.outputImage.classList.remove('hidden');
+            }
+
             async handleEncrypt() {
-                if (this.isProcessing) return;
-                this.mode = 'encrypt';
-                this.updateUI();
                 this.processStartTime = performance.now();
 
                 let writable = null;
@@ -950,11 +968,8 @@
                     this.showMessage('加密完成', 'success');
 
                 } catch (e) {
-                    console.error(e);
                     if (writable) await writable.abort().catch(() => {});
-                    this.el.operationStatus.textContent = '✗ 加密失败';
-                    this.el.operationStatus.className = 'text-red-600 font-medium';
-                    this.showMessage('加密失败：' + e.message, 'error');
+                    throw e;
                 } finally {
                     this.hideLoading();
                     this.el.processProgress.classList.remove('active');
@@ -962,9 +977,6 @@
             }
 
             async handleDecrypt() {
-                if (this.isProcessing) return;
-                this.mode = 'decrypt';
-                this.updateUI();
                 this.processStartTime = performance.now();
 
                 let writable = null;
@@ -1034,7 +1046,6 @@
 
                     const ciphertextSize = inputFile.size - headerSize;
 
-                    // 智能扩展名 + 兜底逻辑
                     let fileExt = getExtensionFromMime(mimeType);
                     if (!fileExt && originalName) {
                         const m = originalName.match(/(\.[a-zA-Z0-9]{1,8})$/);
@@ -1055,7 +1066,10 @@
                         }]
                     };
 
-                    if (supportsSavePicker) {
+                    // 关键改动：只有导入文件时才强制使用 picker（Chrome 弹出保存）
+                    // 纯文本密文解密不使用 picker，直接显示结果
+                    const isFileImport = this.importedFile !== null;
+                    if (isFileImport && supportsSavePicker) {
                         const handle = await window.showSaveFilePicker(pickerOpts);
                         writable = await handle.createWritable();
                     }
@@ -1125,22 +1139,21 @@
 
                         finalBlob = new Blob([plaintext], { type: mimeType || 'application/octet-stream' });
 
-                        this.lastPlainBlob = finalBlob;
-                        this.lastPlainFileName = finalFileName;
-                        this.el.downloadButton.classList.remove('hidden');
-
-                        if (mimeType.startsWith('image/')) {
-                            this.el.outputImage.src = URL.createObjectURL(finalBlob);
-                            this.el.outputImage.classList.remove('hidden');
-                        } else if (mimeType.startsWith('text/') || isLikelyText(plaintext)) {
+                        // 文本解密：显示在输出框
+                        if (mimeType.startsWith('text/') || isLikelyText(plaintext)) {
                             const text = new TextDecoder().decode(plaintext);
                             this.el.outputText.value = text.length > 100000 ? text.substring(0, 100000) + '\n\n...(内容过长，已截断显示)' : text;
                             this.el.outputText.classList.remove('hidden');
                             this.el.copyButton.textContent = '📋 复制明文';
                             this.el.copyButton.classList.remove('hidden');
+                        } else if (mimeType.startsWith('image/')) {
+                            this.updateImage(finalBlob);
                         } else {
                             this.el.outputText.value = '[二进制文件解密完成]';
                             this.el.outputText.classList.remove('hidden');
+                            this.lastPlainBlob = finalBlob;
+                            this.lastPlainFileName = finalFileName;
+                            this.el.downloadButton.classList.remove('hidden');
                         }
 
                         if (!supportsSavePicker && ciphertextSize > LARGE_TEXT_THRESHOLD) {
@@ -1163,15 +1176,8 @@
                     this.el.showDetailsButton.classList.remove('hidden');
 
                 } catch (e) {
-                    console.error(e);
                     if (writable) await writable.abort().catch(() => {});
-                    this.el.operationStatus.textContent = '✗ 解密失败';
-                    this.el.operationStatus.className = 'text-red-600 font-medium';
-                    let msg = e.message;
-                    if (msg.includes('operation failed') || msg.includes('The operation failed')) {
-                        msg = '密码错误或文件被篡改';
-                    }
-                    this.showMessage('解密失败：' + msg, 'error');
+                    throw e;
                 } finally {
                     this.hideLoading();
                     this.el.processProgress.classList.remove('active');
@@ -1233,6 +1239,12 @@
                 this.el.toggleAdvanced.textContent = '显示高级选项';
                 this.lastPlainBlob = null;
                 this.lastCipherBlob = null;
+
+                if (this.currentImageUrl) {
+                    URL.revokeObjectURL(this.currentImageUrl);
+                    this.currentImageUrl = null;
+                }
+
                 this.showMessage('已清空', 'info');
             }
         }
