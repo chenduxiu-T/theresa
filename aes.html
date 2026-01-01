@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AES-256-GCM + 日文Base 加解密工具</title>
+    <title>AES-256-GCM + 日文Base 加解密工具（终极完美版）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -249,8 +249,8 @@
     </div>
 
     <script>
-        const CURRENT_VERSION = 20;
-        const MAGIC_BYTE = 0xF2;
+        const CURRENT_VERSION = 23;
+        const MAGIC_BYTE = 0xF5;
         const SEPARATOR_BYTE = 0x00;
         const MAX_MIME_LEN = 255;
         const GCM_TAG_LEN = 16;
@@ -359,11 +359,149 @@
 
         function getExtensionFromMime(mime) {
             const map = {
-                'text/plain': '.txt', 'text/html': '.html', 'image/jpeg': '.jpg', 'image/png': '.png',
-                'image/gif': '.gif', 'application/pdf': '.pdf', 'application/zip': '.zip',
-                'video/mp4': '.mp4', 'audio/mpeg': '.mp3'
+                // text
+                'text/plain': '.txt',
+                'text/html': '.html',
+                'text/css': '.css',
+                'text/javascript': '.js',
+                'application/javascript': '.js',
+                'application/json': '.json',
+                'application/xml': '.xml',
+                'text/csv': '.csv',
+                'text/markdown': '.md',
+                'application/x-sh': '.sh',
+                'text/yaml': '.yaml',
+                'text/tsv': '.tsv',
+                'text/richtext': '.rtx',
+                'application/x-tex': '.tex',
+
+                // images
+                'image/jpeg': '.jpg',
+                'image/pjpeg': '.jpg',
+                'image/png': '.png',
+                'image/gif': '.gif',
+                'image/webp': '.webp',
+                'image/svg+xml': '.svg',
+                'image/bmp': '.bmp',
+                'image/tiff': '.tiff',
+                'image/x-icon': '.ico',
+                'image/heic': '.heic',
+                'image/heif': '.heif',
+                'image/avif': '.avif',
+                'image/vnd.adobe.photoshop': '.psd',
+                'image/vnd.microsoft.icon': '.ico',
+                'image/x-canon-cr2': '.cr2',
+                'image/x-nikon-nef': '.nef',
+                'image/x-sony-arw': '.arw',
+                'image/x-panasonic-rw2': '.rw2',
+
+                // audio
+                'audio/mpeg': '.mp3',
+                'audio/wav': '.wav',
+                'audio/ogg': '.ogg',
+                'audio/flac': '.flac',
+                'audio/mp4': '.m4a',
+                'audio/webm': '.weba',
+                'audio/aac': '.aac',
+                'audio/amr': '.amr',
+                'audio/x-wav': '.wav',
+                'audio/x-m4a': '.m4a',
+
+                // video
+                'video/mp4': '.mp4',
+                'video/webm': '.webm',
+                'video/ogg': '.ogv',
+                'video/x-matroska': '.mkv',
+                'video/quicktime': '.mov',
+                'video/avi': '.avi',
+                'video/msvideo': '.avi',
+                'video/x-flv': '.flv',
+                'video/mpeg': '.mpeg',
+                'video/x-ms-wmv': '.wmv',
+                'video/x-msvideo': '.avi',
+
+                // archives
+                'application/zip': '.zip',
+                'application/x-7z-compressed': '.7z',
+                'application/x-rar-compressed': '.rar',
+                'application/x-tar': '.tar',
+                'application/gzip': '.gz',
+                'application/x-bzip2': '.bz2',
+                'application/x-xz': '.xz',
+                'application/x-lzh-compressed': '.lzh',
+                'application/x-cbr': '.cbr',
+                'application/x-cbz': '.cbz',
+                'application/x-arj': '.arj',
+
+                // documents
+                'application/pdf': '.pdf',
+                'application/msword': '.doc',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+                'application/vnd.ms-excel': '.xls',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+                'application/vnd.ms-powerpoint': '.ppt',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+                'application/rtf': '.rtf',
+                'application/epub+zip': '.epub',
+                'application/vnd.oasis.opendocument.text': '.odt',
+                'application/vnd.oasis.opendocument.spreadsheet': '.ods',
+                'application/vnd.oasis.opendocument.presentation': '.odp',
+                'application/vnd.apple.pages': '.pages',
+                'application/vnd.apple.numbers': '.numbers',
+                'application/vnd.apple.keynote': '.key',
+                'application/vnd.mozilla.xul+xml': '.xul',
+                'application/vnd.visio': '.vsd',
+                'application/vnd.stardivision.writer': '.sdw',
+                'application/vnd.stardivision.calc': '.sdc',
+
+                // fonts
+                'font/woff': '.woff',
+                'font/woff2': '.woff2',
+                'application/font-woff': '.woff',
+                'application/font-woff2': '.woff2',
+                'font/ttf': '.ttf',
+                'font/otf': '.otf',
+                'application/vnd.ms-fontobject': '.eot',
+
+                // binaries
+                'application/octet-stream': '.bin',
+                'application/x-msdownload': '.exe',
+                'application/vnd.android.package-archive': '.apk',
+                'application/x-msinstaller': '.msi',
+                'application/x-dosexec': '.exe',
+                'application/x-mach-binary': '.bin',
+                'application/x-elf': '.elf',
+
+                // databases / data
+                'application/sql': '.sql',
+                'application/x-sqlite3': '.sqlite',
+                'application/vnd.sqlite3': '.sqlite',
+                'application/vnd.ms-access': '.mdb',
+                'application/vnd.ms-access.addin.mda': '.mda',
+                'application/vnd.ms-access.template.mdt': '.mdt',
+                'application/vnd.ms-access.addin.mda': '.mda',
+                'application/vnd.ms-access.runtime': '.accdr',
+
+                // CAD / 3D
+                'model/stl': '.stl',
+                'model/iges': '.igs',
+                'model/step+xml': '.stp',
+                'model/obj': '.obj',
+                'application/vnd.autocad.dwg': '.dwg',
+                'application/vnd.autocad.dxf': '.dxf',
+
+                // compressed images / raw data
+                'application/x-nikon-nef': '.nef',
+                'application/x-canon-cr2': '.cr2',
+                'application/x-sony-arw': '.arw',
+                'application/x-panasonic-rw2': '.rw2',
+                'application/x-fujifilm-raf': '.raf',
+                'application/x-olympus-orf': '.orf',
+                // binaries
+                'application/octet-stream': '.bin'
             };
-            return map[mime] || '.bin';
+
+            return map[mime] || '';
         }
 
         function isLikelyText(bytes) {
@@ -416,7 +554,6 @@
                 this.processStartTime = 0;
                 this.processedBytes = 0;
                 this.totalBytes = 0;
-                this.fallbackChunks = null;
                 this.lastPlainBlob = null;
                 this.lastPlainFileName = null;
                 this.lastCipherBlob = null;
@@ -713,11 +850,17 @@
                         suggestedName = getTimestampFilename('encrypted', '.enc');
                     }
 
+                    const pickerOpts = {
+                        suggestedName: suggestedName,
+                        startIn: 'downloads',
+                        types: [{
+                            description: 'Encrypted File',
+                            accept: { 'application/octet-stream': ['.enc'] }
+                        }]
+                    };
+
                     if (outputMode === 'file' && supportsSavePicker) {
-                        const handle = await window.showSaveFilePicker({
-                            suggestedName: suggestedName,
-                            types: [{ description: 'Encrypted File', accept: { 'application/octet-stream': ['.enc'] } }]
-                        });
+                        const handle = await window.showSaveFilePicker(pickerOpts);
                         writable = await handle.createWritable();
                         await writable.write(header);
                     } else if (outputMode === 'file') {
@@ -825,7 +968,9 @@
                 this.processStartTime = performance.now();
 
                 let writable = null;
-                let chunks = [];
+                let memoryChunks = [];
+                let finalBlob = null;
+                let finalFileName = null;
 
                 try {
                     this.showLoading();
@@ -889,22 +1034,29 @@
 
                     const ciphertextSize = inputFile.size - headerSize;
 
-                    let suggestedName;
-                    if (originalName) {
-                        suggestedName = originalName.replace(/\.enc$/i, '');
-                        const ext = getExtensionFromMime(mimeType);
-                        if (!suggestedName.endsWith(ext)) {
-                            suggestedName += ext;
-                        }
-                    } else {
-                        suggestedName = getTimestampFilename('decrypted', getExtensionFromMime(mimeType));
+                    // 智能扩展名 + 兜底逻辑
+                    let fileExt = getExtensionFromMime(mimeType);
+                    if (!fileExt && originalName) {
+                        const m = originalName.match(/(\.[a-zA-Z0-9]{1,8})$/);
+                        if (m) fileExt = m[1].toLowerCase();
                     }
+                    if (!fileExt) fileExt = '.bin';
 
-                    if (supportsSavePicker && ciphertextSize > TWO_GB) {
-                        const handle = await window.showSaveFilePicker({
-                            suggestedName: suggestedName,
-                            types: [{ description: 'Decrypted File', accept: { [mimeType]: [getExtensionFromMime(mimeType)] } }]
-                        });
+                    finalFileName = originalName 
+                        ? originalName.replace(/\.enc$/i, '') + (originalName.replace(/\.enc$/i, '').endsWith(fileExt) ? '' : fileExt)
+                        : getTimestampFilename('decrypted', fileExt);
+
+                    const pickerOpts = {
+                        suggestedName: finalFileName,
+                        startIn: 'downloads',
+                        types: [{
+                            description: 'Decrypted File',
+                            accept: mimeType ? { [mimeType]: [fileExt] } : { 'application/octet-stream': ['.bin'] }
+                        }]
+                    };
+
+                    if (supportsSavePicker) {
+                        const handle = await window.showSaveFilePicker(pickerOpts);
                         writable = await handle.createWritable();
                     }
 
@@ -945,7 +1097,7 @@
                         if (writable) {
                             await writable.write(plainChunk);
                         } else {
-                            chunks.push(plainChunk);
+                            memoryChunks.push(plainChunk);
                         }
 
                         counter++;
@@ -963,18 +1115,22 @@
                         await writable.close();
                         this.showMessage('解密完成，已保存为文件', 'success');
                     } else {
-                        const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+                        const totalLen = memoryChunks.reduce((s, c) => s + c.length, 0);
                         const plaintext = new Uint8Array(totalLen);
                         let off = 0;
-                        for (const c of chunks) {
+                        for (const c of memoryChunks) {
                             plaintext.set(c, off);
                             off += c.length;
                         }
 
-                        const blob = new Blob([plaintext], { type: mimeType });
+                        finalBlob = new Blob([plaintext], { type: mimeType || 'application/octet-stream' });
+
+                        this.lastPlainBlob = finalBlob;
+                        this.lastPlainFileName = finalFileName;
+                        this.el.downloadButton.classList.remove('hidden');
 
                         if (mimeType.startsWith('image/')) {
-                            this.el.outputImage.src = URL.createObjectURL(blob);
+                            this.el.outputImage.src = URL.createObjectURL(finalBlob);
                             this.el.outputImage.classList.remove('hidden');
                         } else if (mimeType.startsWith('text/') || isLikelyText(plaintext)) {
                             const text = new TextDecoder().decode(plaintext);
@@ -985,13 +1141,10 @@
                         } else {
                             this.el.outputText.value = '[二进制文件解密完成]';
                             this.el.outputText.classList.remove('hidden');
-                            this.lastPlainBlob = blob;
-                            this.lastPlainFileName = suggestedName;
-                            this.el.downloadButton.classList.remove('hidden');
                         }
 
                         if (!supportsSavePicker && ciphertextSize > LARGE_TEXT_THRESHOLD) {
-                            triggerDownload(blob, suggestedName);
+                            triggerDownload(finalBlob, finalFileName);
                         }
                     }
 
