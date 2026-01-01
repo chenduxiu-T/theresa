@@ -149,9 +149,9 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">分块大小（MB）</label>
-                    <input id="chunkSize" type="number" value="20" min="1" max="100"
+                    <input id="chunkSize" type="number" value="20" min="1" max="500"
                            class="w-full p-2 border rounded-md">
-                    <p class="text-xs text-gray-500 mt-1">建议10-50MB，越大速度越快</p>
+                    <p class="text-xs text-gray-500 mt-1">建议10-500MB，越大速度越快，但内存占用更高（大文件推荐Chrome/Edge）</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">加密输出方式</label>
@@ -249,7 +249,7 @@
     </div>
 
     <script>
-        const CURRENT_VERSION = 25;
+        const CURRENT_VERSION = 26;
         const MAGIC_BYTE = 0xF7;
         const SEPARATOR_BYTE = 0x00;
         const MAX_MIME_LEN = 255;
@@ -374,6 +374,10 @@
                 'text/tsv': '.tsv',
                 'text/richtext': '.rtx',
                 'application/x-tex': '.tex',
+                'text/xml': '.xml',  // FIXED: 添加
+                'application/rss+xml': '.rss',  // FIXED: 添加
+                'application/atom+xml': '.atom',  // FIXED: 添加
+                'text/x-log': '.log',  // FIXED: 添加
 
                 // images
                 'image/jpeg': '.jpg',
@@ -394,6 +398,10 @@
                 'image/x-nikon-nef': '.nef',
                 'image/x-sony-arw': '.arw',
                 'image/x-panasonic-rw2': '.rw2',
+                'image/x-portable-pixmap': '.ppm',  // FIXED: 添加
+                'image/x-rgb': '.rgb',  // FIXED: 添加
+                'image/vnd.djvu': '.djvu',  // FIXED: 添加
+                'image/x-xbitmap': '.xbm',  // FIXED: 添加
 
                 // audio
                 'audio/mpeg': '.mp3',
@@ -406,6 +414,11 @@
                 'audio/amr': '.amr',
                 'audio/x-wav': '.wav',
                 'audio/x-m4a': '.m4a',
+                'audio/midi': '.midi',  // FIXED: 添加
+                'audio/x-midi': '.midi',  // FIXED: 添加
+                'audio/x-ms-wma': '.wma',  // FIXED: 添加
+                'audio/x-aiff': '.aiff',  // FIXED: 添加
+                'audio/basic': '.au',  // FIXED: 添加
 
                 // video
                 'video/mp4': '.mp4',
@@ -419,6 +432,11 @@
                 'video/mpeg': '.mpeg',
                 'video/x-ms-wmv': '.wmv',
                 'video/x-msvideo': '.avi',
+                'video/3gpp': '.3gp',  // FIXED: 添加
+                'video/3gpp2': '.3g2',  // FIXED: 添加
+                'video/x-ms-asf': '.asf',  // FIXED: 添加
+                'video/x-m4v': '.m4v',  // FIXED: 添加
+                'video/vnd.dlna.mpeg-tts': '.ts',  // FIXED: 添加
 
                 // archives
                 'application/zip': '.zip',
@@ -432,6 +450,10 @@
                 'application/x-cbr': '.cbr',
                 'application/x-cbz': '.cbz',
                 'application/x-arj': '.arj',
+                'application/x-zip-compressed': '.zip',  // FIXED: 添加
+                'application/x-gzip': '.gz',  // FIXED: 添加
+                'application/x-bzip': '.bz',  // FIXED: 添加
+                'application/vnd.rar': '.rar',  // FIXED: 添加
 
                 // documents
                 'application/pdf': '.pdf',
@@ -453,6 +475,10 @@
                 'application/vnd.visio': '.vsd',
                 'application/vnd.stardivision.writer': '.sdw',
                 'application/vnd.stardivision.calc': '.sdc',
+                'application/vnd.ms-access': '.mdb',  // FIXED: 移动并添加更多
+                'application/vnd.ms-project': '.mpp',  // FIXED: 添加
+                'application/vnd.lotus-wordpro': '.lwp',  // FIXED: 添加
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.template': '.dotx',  // FIXED: 添加
 
                 // fonts
                 'font/woff': '.woff',
@@ -462,6 +488,8 @@
                 'font/ttf': '.ttf',
                 'font/otf': '.otf',
                 'application/vnd.ms-fontobject': '.eot',
+                'font/collection': '.ttc',  // FIXED: 添加
+                'font/sfnt': '.ttf',  // FIXED: 添加
 
                 // binaries
                 'application/octet-stream': '.bin',
@@ -471,6 +499,10 @@
                 'application/x-dosexec': '.exe',
                 'application/x-mach-binary': '.bin',
                 'application/x-elf': '.elf',
+                'application/java-archive': '.jar',  // FIXED: 添加
+                'application/x-shockwave-flash': '.swf',  // FIXED: 添加
+                'application/x-msclip': '.clp',  // FIXED: 添加
+                'application/x-silverlight-app': '.xap',  // FIXED: 添加
 
                 // databases / data
                 'application/sql': '.sql',
@@ -481,6 +513,8 @@
                 'application/vnd.ms-access.template.mdt': '.mdt',
                 'application/vnd.ms-access.addin.mda': '.mda',
                 'application/vnd.ms-access.runtime': '.accdr',
+                'application/x-msaccess': '.mdb',  // FIXED: 添加
+                'application/vnd.symbian.install': '.sis',  // FIXED: 添加
 
                 // CAD / 3D
                 'model/stl': '.stl',
@@ -489,6 +523,10 @@
                 'model/obj': '.obj',
                 'application/vnd.autocad.dwg': '.dwg',
                 'application/vnd.autocad.dxf': '.dxf',
+                'model/vnd.collada+xml': '.dae',  // FIXED: 添加
+                'model/x3d+xml': '.x3d',  // FIXED: 添加
+                'model/gltf+json': '.gltf',  // FIXED: 添加
+                'model/gltf-binary': '.glb',  // FIXED: 添加
 
                 // compressed images / raw data
                 'application/x-nikon-nef': '.nef',
@@ -498,7 +536,12 @@
                 'application/x-fujifilm-raf': '.raf',
                 'application/x-olympus-orf': '.orf',
                 // binaries
-                'application/octet-stream': '.bin'
+                'application/octet-stream': '.bin',
+                'application/x-freearc': '.arc',  // FIXED: 添加
+                'application/vnd.google-earth.kml+xml': '.kml',  // FIXED: 添加
+                'application/vnd.google-earth.kmz': '.kmz',  // FIXED: 添加
+                'application/x-font-ttf': '.ttf',  // FIXED: 添加
+                'audio/x-aac': '.aac'  // FIXED: 添加
             };
 
             return map[mime] || '';
@@ -770,7 +813,12 @@
             }
 
             getChunkSize() {
-                return Math.max(1, Math.min(100, parseInt(this.el.chunkSize.value) || 20)) * 1024 * 1024;
+                const mb = Math.max(1, Math.min(500, parseInt(this.el.chunkSize.value) || 20));
+                const size = mb * 1024 * 1024;
+                if (mb > 100) {
+                    console.warn(`分块大小${mb}MB较大，可能增加内存占用，建议使用Chrome/Edge处理大文件。`);
+                }
+                return size;
             }
 
             showMessage(msg, type = 'info') {
@@ -837,7 +885,7 @@
                     const mimeBytes = new TextEncoder().encode(this.inputMime);
                     const mimeLen = Math.min(mimeBytes.length, MAX_MIME_LEN);
 
-                    const headerLen = 1 + 1 + 1 + 4 + 16 + FILE_NONCE_LEN + mimeLen + 1;
+                    const headerLen = 1 + 1 + 1 + 4 + 2 + 16 + FILE_NONCE_LEN + mimeLen + 1;
                     const header = new Uint8Array(headerLen);
 
                     let pos = 0;
@@ -848,6 +896,10 @@
                     const headerView = new DataView(header.buffer);
                     headerView.setUint32(pos, iterations, false);
                     pos += 4;
+
+                    const chunkSizeMB = parseInt(this.el.chunkSize.value) || 20;
+                    headerView.setUint16(pos, chunkSizeMB, false);
+                    pos += 2;
 
                     header.set(salt, pos);
                     pos += 16;
@@ -1014,7 +1066,7 @@
                     let pos = 0;
                     if (headerBytes[pos++] !== MAGIC_BYTE) throw new Error('文件格式错误：不是本工具生成的密文');
                     const version = headerBytes[pos++];
-                    if (version !== CURRENT_VERSION) throw new Error(`版本不兼容：文件版本 ${version}，当前工具版本 ${CURRENT_VERSION}`);
+                    if (version < 25 || version > CURRENT_VERSION) throw new Error(`版本不兼容：文件版本 ${version}，当前工具版本 ${CURRENT_VERSION}`);
 
                     const mimeLen = headerBytes[pos++];
 
@@ -1022,6 +1074,16 @@
                     const headerView = new DataView(headerBytes.buffer);
                     const iterations = headerView.getUint32(pos, false);
                     pos += 4;
+
+                    let chunkSize;
+                    if (version >= 26) {
+                        if (pos + 2 > headerBytes.length) throw new Error('文件头损坏：chunkSize 数据不完整');
+                        const chunkSizeMB = headerView.getUint16(pos, false);
+                        pos += 2;
+                        chunkSize = chunkSizeMB * 1024 * 1024;
+                    } else {
+                        chunkSize = this.getChunkSize();
+                    }
 
                     if (pos + 16 > headerBytes.length) throw new Error('文件头损坏：salt 数据不完整');
                     const salt = headerBytes.slice(pos, pos + 16);
@@ -1042,8 +1104,6 @@
 
                     const password = this.getPassword();
                     const aesKey = await deriveKey(password, salt, iterations);
-
-                    const chunkSize = this.getChunkSize();
 
                     const ciphertextSize = inputFile.size - headerSize;
 
@@ -1067,8 +1127,6 @@
                         }]
                     };
 
-                    // 关键改动：只有导入文件时才强制使用 picker（Chrome 弹出保存）
-                    // 纯文本密文解密不使用 picker，直接显示结果
                     const isFileImport = this.importedFile !== null;
                     if (isFileImport && supportsSavePicker) {
                         const handle = await window.showSaveFilePicker(pickerOpts);
@@ -1140,7 +1198,6 @@
 
                         finalBlob = new Blob([plaintext], { type: mimeType || 'application/octet-stream' });
 
-                        // 文本解密：显示在输出框
                         if (mimeType.startsWith('text/') || isLikelyText(plaintext)) {
                             const text = new TextDecoder().decode(plaintext);
                             this.el.outputText.value = text.length > 100000 ? text.substring(0, 100000) + '\n\n...(内容过长，已截断显示)' : text;
