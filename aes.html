@@ -248,6 +248,7 @@
         </div>
     </div>
 
+    <!-- 原有加解密核心腳本 -->
     <script>
         const CURRENT_VERSION = 26;
         const MAGIC_BYTE = 0xF7;
@@ -359,7 +360,6 @@
 
         function getExtensionFromMime(mime) {
             const map = {
-                // text
                 'text/plain': '.txt',
                 'text/html': '.html',
                 'text/css': '.css',
@@ -374,12 +374,10 @@
                 'text/tsv': '.tsv',
                 'text/richtext': '.rtx',
                 'application/x-tex': '.tex',
-                'text/xml': '.xml',  // FIXED: 添加
-                'application/rss+xml': '.rss',  // FIXED: 添加
-                'application/atom+xml': '.atom',  // FIXED: 添加
-                'text/x-log': '.log',  // FIXED: 添加
-
-                // images
+                'text/xml': '.xml',
+                'application/rss+xml': '.rss',
+                'application/atom+xml': '.atom',
+                'text/x-log': '.log',
                 'image/jpeg': '.jpg',
                 'image/pjpeg': '.jpg',
                 'image/png': '.png',
@@ -398,12 +396,10 @@
                 'image/x-nikon-nef': '.nef',
                 'image/x-sony-arw': '.arw',
                 'image/x-panasonic-rw2': '.rw2',
-                'image/x-portable-pixmap': '.ppm',  // FIXED: 添加
-                'image/x-rgb': '.rgb',  // FIXED: 添加
-                'image/vnd.djvu': '.djvu',  // FIXED: 添加
-                'image/x-xbitmap': '.xbm',  // FIXED: 添加
-
-                // audio
+                'image/x-portable-pixmap': '.ppm',
+                'image/x-rgb': '.rgb',
+                'image/vnd.djvu': '.djvu',
+                'image/x-xbitmap': '.xbm',
                 'audio/mpeg': '.mp3',
                 'audio/wav': '.wav',
                 'audio/ogg': '.ogg',
@@ -414,13 +410,11 @@
                 'audio/amr': '.amr',
                 'audio/x-wav': '.wav',
                 'audio/x-m4a': '.m4a',
-                'audio/midi': '.midi',  // FIXED: 添加
-                'audio/x-midi': '.midi',  // FIXED: 添加
-                'audio/x-ms-wma': '.wma',  // FIXED: 添加
-                'audio/x-aiff': '.aiff',  // FIXED: 添加
-                'audio/basic': '.au',  // FIXED: 添加
-
-                // video
+                'audio/midi': '.midi',
+                'audio/x-midi': '.midi',
+                'audio/x-ms-wma': '.wma',
+                'audio/x-aiff': '.aiff',
+                'audio/basic': '.au',
                 'video/mp4': '.mp4',
                 'video/webm': '.webm',
                 'video/ogg': '.ogv',
@@ -432,13 +426,11 @@
                 'video/mpeg': '.mpeg',
                 'video/x-ms-wmv': '.wmv',
                 'video/x-msvideo': '.avi',
-                'video/3gpp': '.3gp',  // FIXED: 添加
-                'video/3gpp2': '.3g2',  // FIXED: 添加
-                'video/x-ms-asf': '.asf',  // FIXED: 添加
-                'video/x-m4v': '.m4v',  // FIXED: 添加
-                'video/vnd.dlna.mpeg-tts': '.ts',  // FIXED: 添加
-
-                // archives
+                'video/3gpp': '.3gp',
+                'video/3gpp2': '.3g2',
+                'video/x-ms-asf': '.asf',
+                'video/x-m4v': '.m4v',
+                'video/vnd.dlna.mpeg-tts': '.ts',
                 'application/zip': '.zip',
                 'application/x-7z-compressed': '.7z',
                 'application/x-rar-compressed': '.rar',
@@ -450,12 +442,10 @@
                 'application/x-cbr': '.cbr',
                 'application/x-cbz': '.cbz',
                 'application/x-arj': '.arj',
-                'application/x-zip-compressed': '.zip',  // FIXED: 添加
-                'application/x-gzip': '.gz',  // FIXED: 添加
-                'application/x-bzip': '.bz',  // FIXED: 添加
-                'application/vnd.rar': '.rar',  // FIXED: 添加
-
-                // documents
+                'application/x-zip-compressed': '.zip',
+                'application/x-gzip': '.gz',
+                'application/x-bzip': '.bz',
+                'application/vnd.rar': '.rar',
                 'application/pdf': '.pdf',
                 'application/msword': '.doc',
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
@@ -475,12 +465,10 @@
                 'application/vnd.visio': '.vsd',
                 'application/vnd.stardivision.writer': '.sdw',
                 'application/vnd.stardivision.calc': '.sdc',
-                'application/vnd.ms-access': '.mdb',  // FIXED: 移动并添加更多
-                'application/vnd.ms-project': '.mpp',  // FIXED: 添加
-                'application/vnd.lotus-wordpro': '.lwp',  // FIXED: 添加
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.template': '.dotx',  // FIXED: 添加
-
-                // fonts
+                'application/vnd.ms-access': '.mdb',
+                'application/vnd.ms-project': '.mpp',
+                'application/vnd.lotus-wordpro': '.lwp',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.template': '.dotx',
                 'font/woff': '.woff',
                 'font/woff2': '.woff2',
                 'application/font-woff': '.woff',
@@ -488,10 +476,8 @@
                 'font/ttf': '.ttf',
                 'font/otf': '.otf',
                 'application/vnd.ms-fontobject': '.eot',
-                'font/collection': '.ttc',  // FIXED: 添加
-                'font/sfnt': '.ttf',  // FIXED: 添加
-
-                // binaries
+                'font/collection': '.ttc',
+                'font/sfnt': '.ttf',
                 'application/octet-stream': '.bin',
                 'application/x-msdownload': '.exe',
                 'application/vnd.android.package-archive': '.apk',
@@ -499,12 +485,10 @@
                 'application/x-dosexec': '.exe',
                 'application/x-mach-binary': '.bin',
                 'application/x-elf': '.elf',
-                'application/java-archive': '.jar',  // FIXED: 添加
-                'application/x-shockwave-flash': '.swf',  // FIXED: 添加
-                'application/x-msclip': '.clp',  // FIXED: 添加
-                'application/x-silverlight-app': '.xap',  // FIXED: 添加
-
-                // databases / data
+                'application/java-archive': '.jar',
+                'application/x-shockwave-flash': '.swf',
+                'application/x-msclip': '.clp',
+                'application/x-silverlight-app': '.xap',
                 'application/sql': '.sql',
                 'application/x-sqlite3': '.sqlite',
                 'application/vnd.sqlite3': '.sqlite',
@@ -513,37 +497,30 @@
                 'application/vnd.ms-access.template.mdt': '.mdt',
                 'application/vnd.ms-access.addin.mda': '.mda',
                 'application/vnd.ms-access.runtime': '.accdr',
-                'application/x-msaccess': '.mdb',  // FIXED: 添加
-                'application/vnd.symbian.install': '.sis',  // FIXED: 添加
-
-                // CAD / 3D
+                'application/x-msaccess': '.mdb',
+                'application/vnd.symbian.install': '.sis',
                 'model/stl': '.stl',
                 'model/iges': '.igs',
                 'model/step+xml': '.stp',
                 'model/obj': '.obj',
                 'application/vnd.autocad.dwg': '.dwg',
                 'application/vnd.autocad.dxf': '.dxf',
-                'model/vnd.collada+xml': '.dae',  // FIXED: 添加
-                'model/x3d+xml': '.x3d',  // FIXED: 添加
-                'model/gltf+json': '.gltf',  // FIXED: 添加
-                'model/gltf-binary': '.glb',  // FIXED: 添加
-
-                // compressed images / raw data
+                'model/vnd.collada+xml': '.dae',
+                'model/x3d+xml': '.x3d',
+                'model/gltf+json': '.gltf',
+                'model/gltf-binary': '.glb',
                 'application/x-nikon-nef': '.nef',
                 'application/x-canon-cr2': '.cr2',
                 'application/x-sony-arw': '.arw',
                 'application/x-panasonic-rw2': '.rw2',
                 'application/x-fujifilm-raf': '.raf',
                 'application/x-olympus-orf': '.orf',
-                // binaries
-                'application/octet-stream': '.bin',
-                'application/x-freearc': '.arc',  // FIXED: 添加
-                'application/vnd.google-earth.kml+xml': '.kml',  // FIXED: 添加
-                'application/vnd.google-earth.kmz': '.kmz',  // FIXED: 添加
-                'application/x-font-ttf': '.ttf',  // FIXED: 添加
-                'audio/x-aac': '.aac'  // FIXED: 添加
+                'application/x-freearc': '.arc',
+                'application/vnd.google-earth.kml+xml': '.kml',
+                'application/vnd.google-earth.kmz': '.kmz',
+                'application/x-font-ttf': '.ttf',
+                'audio/x-aac': '.aac'
             };
-
             return map[mime] || '';
         }
 
@@ -1309,6 +1286,45 @@
 
         document.addEventListener('DOMContentLoaded', () => new App());
     </script>
+
+    <!-- Live2D 看板娘 - 自訂配置版 -->
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof initWidget === 'function') {
+                initWidget({
+                    model: {
+                        jsonPath: 'https://fastly.jsdelivr.net/gh/zenghongtu/live2d-model-assets@latest/live2d_assets/hijiki/assets/hijiki.model3.json',
+                    },
+                    pluginRootPath: 'live2dw/',
+                    pluginJsPath: 'lib/',
+                    pluginModelPath: 'live2d_assets/',
+                    tagMode: false,
+                    log: false,
+                    display: {
+                        position: 'right',
+                        width: 200,
+                        height: 400,
+                        hOffset: -20,
+                        vOffset: -60
+                    },
+                    mobile: {
+                        show: true,
+                        scale: 0.5
+                    },
+                    react: {
+                        opacityDefault: 0.7,
+                        opacityOnHover: 0.9,
+                        opacityInDraggable: 0.4
+                    }
+                });
+            } else {
+                console.warn('Live2D widget 載入失敗，請檢查網路或稍後重試');
+            }
+        });
+    </script>
+
+    <!-- Live2D 核心樣式 -->
+    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/live2d-widgets@latest/dist/waifu.css"/>
+
 </body>
 </html>
-
