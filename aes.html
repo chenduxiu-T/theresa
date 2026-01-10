@@ -84,12 +84,10 @@
         .toast.error { background: #ef4444; }
         .toast.info { background: #3b82f6; }
         .toast.show { opacity: 1; }
-        /* Live2D 強制浮在最上層 */
         .live2d-container, .live2d, canvas {
             z-index: 9999 !important;
             pointer-events: auto !important;
         }
-        /* 模型選擇器樣式 */
         #modelSelector {
             position: fixed;
             bottom: 20px;
@@ -126,301 +124,15 @@
             background: #2563eb;
         }
     </style>
-    <!-- Live2D 核心 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/live2d-widgets@1.0.0/dist/waifu.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/live2d-widget@latest/lib/L2Dwidget.min.css"/>
 </head>
 <body class="flex items-center justify-center p-4">
     <div id="dragOverlay">拖入文件到此处导入</div>
 
-    <!-- 模型選擇器 -->
     <div id="modelSelector">
         <label for="modelSelect">選擇看板娘模型：</label>
         <select id="modelSelect">
             <option value="hijiki">ひじき (預設)</option>
-
-            <optgroup label="Girls' Frontline 系列">
-                <option value="95type_405">95type_405</option>
-                <option value="aa12_2403">aa12_2403</option>
-                <option value="ads_3601">ads_3601</option>
-                <option value="ak12_3302">ak12_3302</option>
-                <option value="an94_3303">an94_3303</option>
-                <option value="carcano1891_2201">carcano1891_2201</option>
-                <option value="carcano1938_2202">carcano1938_2202</option>
-                <option value="cbjms_3503">cbjms_3503</option>
-                <option value="contender_2302">contender_2302</option>
-                <option value="dsr50_1801">dsr50_1801</option>
-                <option value="dsr50_2101">dsr50_2101</option>
-                <option value="fn57_2203">fn57_2203</option>
-                <option value="g36_2407">g36_2407</option>
-                <option value="g36c_1202">g36c_1202</option>
-                <option value="g41_2401">g41_2401</option>
-                <option value="gelina">gelina</option>
-                <option value="grizzly_2102">grizzly_2102</option>
-                <option value="hk416_3401">hk416_3401</option>
-                <option value="hk416_805">hk416_805</option>
-                <option value="k2_3301">k2_3301</option>
-                <option value="kp31_1103">kp31_1103</option>
-                <option value="kp31_310">kp31_310</option>
-                <option value="kp31_3101">kp31_3101</option>
-                <option value="lewis_3502">lewis_3502</option>
-                <option value="m1928a1_1501">m1928a1_1501</option>
-                <option value="m950a_2303">m950a_2303</option>
-                <option value="mlemk1_604">mlemk1_604</option>
-                <option value="ntw20_2301">ntw20_2301</option>
-                <option value="ots14_1203">ots14_1203</option>
-                <option value="ots14_3001">ots14_3001</option>
-                <option value="pkp_1201">pkp_1201</option>
-                <option value="px4storm_2801">px4storm_2801</option>
-                <option value="r93_3501">r93_3501</option>
-                <option value="rfb_1601">rfb_1601</option>
-                <option value="sat8_2601">sat8_2601</option>
-                <option value="sat8_3602">sat8_3602</option>
-                <option value="type64-ar_2901">type64-ar_2901</option>
-                <option value="type88_3504">type88_3504</option>
-                <option value="ump45_3403">ump45_3403</option>
-                <option value="ump9_3404">ump9_3404</option>
-                <option value="vector_1901">vector_1901</option>
-                <option value="wa2000_6">wa2000_6</option>
-                <option value="welrod_1401">welrod_1401</option>
-            </optgroup>
-
-            <optgroup label="Hyperdimension Neptunia 系列">
-                <option value="blanc_classic">blanc_classic</option>
-                <option value="blanc_normal">blanc_normal</option>
-                <option value="blanc_swimwear">blanc_swimwear</option>
-                <option value="histoire">histoire</option>
-                <option value="nepgear">nepgear</option>
-                <option value="nepgear_extra">nepgear_extra</option>
-                <option value="nepgearswim">nepgearswim</option>
-                <option value="nepmaid">nepmaid</option>
-                <option value="nepnep">nepnep</option>
-                <option value="nepswim">nepswim</option>
-                <option value="neptune_classic">neptune_classic</option>
-                <option value="neptune_santa">neptune_santa</option>
-                <option value="noir">noir</option>
-                <option value="noir_classic">noir_classic</option>
-                <option value="noir_santa">noir_santa</option>
-                <option value="noireswim">noireswim</option>
-                <option value="vert_classic">vert_classic</option>
-                <option value="vert_normal">vert_normal</option>
-                <option value="vert_swimwear">vert_swimwear</option>
-            </optgroup>
-
-            <optgroup label="moc3 / Azur Lane 等系列">
-                <option value="xuefeng">xuefeng</option>
-                <option value="aidang_2">aidang_2</option>
-                <option value="aierdeliqi_4">aierdeliqi_4</option>
-                <option value="aierdeliqi_5">aierdeliqi_5</option>
-                <option value="aimierbeierding_2">aimierbeierding_2</option>
-                <option value="aimierbeierding_3">aimierbeierding_3</option>
-                <option value="aisaikesi_4">aisaikesi_4</option>
-                <option value="baerdimo_5">baerdimo_5</option>
-                <option value="banrenma_2">banrenma_2</option>
-                <option value="beierfasite_2">beierfasite_2</option>
-                <option value="biaoqiang">biaoqiang</option>
-                <option value="biaoqiang_3">biaoqiang_3</option>
-                <option value="bisimai_2">bisimai_2</option>
-                <option value="chuixue_3">chuixue_3</option>
-                <option value="dafeng_2">dafeng_2</option>
-                <option value="dafeng_4">dafeng_4</option>
-                <option value="deyizhi_3">deyizhi_3</option>
-                <option value="dujiaoshou_4">dujiaoshou_4</option>
-                <option value="dujiaoshou_6">dujiaoshou_6</option>
-                <option value="dunkeerke_2">dunkeerke_2</option>
-                <option value="edu_3">edu_3</option>
-                <option value="genaisennao_2">genaisennao_2</option>
-                <option value="heitaizi_2">heitaizi_2</option>
-                <option value="hemin_2">hemin_2</option>
-                <option value="hemin_3">hemin_3</option>
-                <option value="huangjiafangzhou_3">huangjiafangzhou_3</option>
-                <option value="huonululu_3">huonululu_3</option>
-                <option value="huonululu_5">huonululu_5</option>
-                <option value="jianye_2">jianye_2</option>
-                <option value="junhe_5">junhe_5</option>
-                <option value="kelifulan_3">kelifulan_3</option>
-                <option value="kubo_2">kubo_2</option>
-                <option value="lafei">lafei</option>
-                <option value="lafei_4">lafei_4</option>
-                <option value="lingbo">lingbo</option>
-                <option value="lingbo_10">lingbo_10</option>
-                <option value="lisailiu_2">lisailiu_2</option>
-                <option value="longfeng_2">longfeng_2</option>
-                <option value="luyijiushi_2">luyijiushi_2</option>
-                <option value="mingshi">mingshi</option>
-                <option value="nengdai_2">nengdai_2</option>
-                <option value="ninghai_4">ninghai_4</option>
-                <option value="pinghai_4">pinghai_4</option>
-                <option value="pinghai_6">pinghai_6</option>
-                <option value="qibolin_2">qibolin_2</option>
-                <option value="rangbaer_3">rangbaer_3</option>
-                <option value="shengluyisi_2">shengluyisi_2</option>
-                <option value="shengluyisi_3">shengluyisi_3</option>
-                <option value="shengluyisi_4">shengluyisi_4</option>
-                <option value="sipeibojue_5">sipeibojue_5</option>
-                <option value="taiyuan_2">taiyuan_2</option>
-                <option value="tianlangxing_3">tianlangxing_3</option>
-                <option value="tierbici_2">tierbici_2</option>
-                <option value="weiyan_2">weiyan_2</option>
-                <option value="wuqi_2">wuqi_2</option>
-                <option value="xianghe_2">xianghe_2</option>
-                <option value="xixuegui_4">xixuegui_4</option>
-                <option value="xuefeng_3">xuefeng_3</option>
-                <option value="xukufu_2">xukufu_2</option>
-                <option value="xukufu_3">xukufu_3</option>
-                <option value="yichui_2">yichui_2</option>
-                <option value="z23">z23</option>
-                <option value="z46_2">z46_2</option>
-                <option value="z46_3">z46_3</option>
-                <option value="z46_4">z46_4</option>
-                <option value="zhala_2">zhala_2</option>
-            </optgroup>
-
-            <optgroup label="moc 系列 (22 各種變體)">
-                <option value="22">22</option>
-                <option value="22.2017.cba-normal">22.2017.cba-normal</option>
-                <option value="22.2017.newyear">22.2017.newyear</option>
-                <option value="22.2017.school">22.2017.school</option>
-                <option value="22.2017.summer.normal.1">22.2017.summer.normal.1</option>
-                <option value="22.2017.summer.normal.2">22.2017.summer.normal.2</option>
-                <option value="22.2017.tomo-bukatsu.high">22.2017.tomo-bukatsu.high</option>
-                <option value="22.2017.tomo-bukatsu.low">22.2017.tomo-bukatsu.low</option>
-                <option value="22.2017.valley">22.2017.valley</option>
-                <option value="22.2017.vdays">22.2017.vdays</option>
-                <option value="22.2018.lover">22.2018.lover</option>
-                <option value="22.2018.spring">22.2018.spring</option>
-                <option value="22.default">22.default</option>
-                <option value="22.xmas.1">22.xmas.1</option>
-                <option value="22.xmas.2">22.xmas.2</option>
-                <option value="22.2017.newyear/22.2017.cba-normal">22.2017.newyear/22.2017.cba-normal</option>
-                <option value="22.2017.newyear/22.2017.newyear">22.2017.newyear/22.2017.newyear</option>
-                <option value="22.2017.newyear/22.2017.school">22.2017.newyear/22.2017.school</option>
-                <option value="22.2017.newyear/22.2017.summer.normal.1">22.2017.newyear/22.2017.summer.normal.1</option>
-                <option value="22.2017.newyear/22.2017.summer.normal.2">22.2017.newyear/22.2017.summer.normal.2</option>
-                <option value="22.2017.newyear/22.2017.tomo-bukatsu.high">22.2017.newyear/22.2017.tomo-bukatsu.high</option>
-                <option value="22.2017.newyear/22.2017.tomo-bukatsu.low">22.2017.newyear/22.2017.tomo-bukatsu.low</option>
-                <option value="22.2017.newyear/22.2017.valley">22.2017.newyear/22.2017.valley</option>
-                <option value="22.2017.newyear/22.2017.vdays">22.2017.newyear/22.2017.vdays</option>
-                <option value="22.2017.newyear/22.2018.lover">22.2017.newyear/22.2018.lover</option>
-                <option value="22.2017.newyear/22.2018.spring">22.2017.newyear/22.2018.spring</option>
-                <option value="22.2017.newyear/22.default">22.2017.newyear/22.default</option>
-                <option value="22.2017.newyear/22.xmas.1">22.2017.newyear/22.xmas.1</option>
-                <option value="22.2017.newyear/22.xmas.2">22.2017.newyear/22.xmas.2</option>
-                <option value="22.2017.school/22.2017.cba-normal">22.2017.school/22.2017.cba-normal</option>
-                <option value="22.2017.school/22.2017.newyear">22.2017.school/22.2017.newyear</option>
-                <option value="22.2017.school/22.2017.school">22.2017.school/22.2017.school</option>
-                <option value="22.2017.school/22.2017.summer.normal.1">22.2017.school/22.2017.summer.normal.1</option>
-                <option value="22.2017.school/22.2017.summer.normal.2">22.2017.school/22.2017.summer.normal.2</option>
-                <option value="22.2017.school/22.2017.tomo-bukatsu.high">22.2017.school/22.2017.tomo-bukatsu.high</option>
-                <option value="22.2017.school/22.2017.tomo-bukatsu.low">22.2017.school/22.2017.tomo-bukatsu.low</option>
-                <option value="22.2017.school/22.2017.valley">22.2017.school/22.2017.valley</option>
-                <option value="22.2017.school/22.2017.vdays">22.2017.school/22.2017.vdays</option>
-                <option value="22.2017.school/22.2018.lover">22.2017.school/22.2018.lover</option>
-                <option value="22.2017.school/22.2018.spring">22.2017.school/22.2018.spring</option>
-                <option value="22.2017.school/22.default">22.2017.school/22.default</option>
-                <option value="22.2017.school/22.xmas.1">22.2017.school/22.xmas.1</option>
-                <option value="22.2017.school/22.xmas.2">22.2017.school/22.xmas.2</option>
-                <option value="22.2017.summer.normal.1/22.2017.cba-normal">22.2017.summer.normal.1/22.2017.cba-normal</option>
-                <option value="22.2017.summer.normal.1/22.2017.newyear">22.2017.summer.normal.1/22.2017.newyear</option>
-                <option value="22.2017.summer.normal.1/22.2017.school">22.2017.summer.normal.1/22.2017.school</option>
-                <option value="22.2017.summer.normal.1/22.2017.summer.normal.1">22.2017.summer.normal.1/22.2017.summer.normal.1</option>
-                <option value="22.2017.summer.normal.1/22.2017.summer.normal.2">22.2017.summer.normal.1/22.2017.summer.normal.2</option>
-                <option value="22.2017.summer.normal.1/22.2017.tomo-bukatsu.high">22.2017.summer.normal.1/22.2017.tomo-bukatsu.high</option>
-                <option value="22.2017.summer.normal.1/22.2017.tomo-bukatsu.low">22.2017.summer.normal.1/22.2017.tomo-bukatsu.low</option>
-                <option value="22.2017.summer.normal.1/22.2017.valley">22.2017.summer.normal.1/22.2017.valley</option>
-                <option value="22.2017.summer.normal.1/22.2017.vdays">22.2017.summer.normal.1/22.2017.vdays</option>
-                <option value="22.2017.summer.normal.1/22.2018.lover">22.2017.summer.normal.1/22.2018.lover</option>
-                <option value="22.2017.summer.normal.1/22.2018.spring">22.2017.summer.normal.1/22.2018.spring</option>
-                <option value="22.2017.summer.normal.1/22.default">22.2017.summer.normal.1/22.default</option>
-                <option value="22.2017.summer.normal.1/22.xmas.1">22.2017.summer.normal.1/22.xmas.1</option>
-                <option value="22.2017.summer.normal.1/22.xmas.2">22.2017.summer.normal.1/22.xmas.2</option>
-                <option value="22.2017.summer.normal.2/22.2017.cba-normal">22.2017.summer.normal.2/22.2017.cba-normal</option>
-                <option value="22.2017.summer.normal.2/22.2017.newyear">22.2017.summer.normal.2/22.2017.newyear</option>
-                <option value="22.2017.summer.normal.2/22.2017.school">22.2017.summer.normal.2/22.2017.school</option>
-                <option value="22.2017.summer.normal.2/22.2017.summer.normal.1">22.2017.summer.normal.2/22.2017.summer.normal.1</option>
-                <option value="22.2017.summer.normal.2/22.2017.summer.normal.2">22.2017.summer.normal.2/22.2017.summer.normal.2</option>
-                <option value="22.2017.summer.normal.2/22.2017.tomo-bukatsu.high">22.2017.summer.normal.2/22.2017.tomo-bukatsu.high</option>
-                <option value="22.2017.summer.normal.2/22.2017.tomo-bukatsu.low">22.2017.summer.normal.2/22.2017.tomo-bukatsu.low</option>
-                <option value="22.2017.summer.normal.2/22.2017.valley">22.2017.summer.normal.2/22.2017.valley</option>
-                <option value="22.2017.summer.normal.2/22.2017.vdays">22.2017.summer.normal.2/22.2017.vdays</option>
-                <option value="22.2017.summer.normal.2/22.2018.lover">22.2017.summer.normal.2/22.2018.lover</option>
-                <option value="22.2017.summer.normal.2/22.2018.spring">22.2017.summer.normal.2/22.2018.spring</option>
-                <option value="22.2017.summer.normal.2/22.default">22.2017.summer.normal.2/22.default</option>
-                <option value="22.2017.summer.normal.2/22.xmas.1">22.2017.summer.normal.2/22.xmas.1</option>
-                <option value="22.2017.summer.normal.2/22.xmas.2">22.2017.summer.normal.2/22.xmas.2</option>
-                <!-- 其他 22 變體已全部包含 -->
-            </optgroup>
-
-            <optgroup label="其他 moc / 通用系列">
-                <option value="Bronya">Bronya</option>
-                <option value="Epsilon">Epsilon</option>
-                <option value="Epsilon2.1">Epsilon2.1</option>
-                <option value="Gantzert_Felixander">Gantzert_Felixander</option>
-                <option value="Kobayaxi">Kobayaxi</option>
-                <option value="PLT">PLT</option>
-                <option value="YuzukiYukari">YuzukiYukari</option>
-                <option value="aoba">aoba</option>
-                <option value="chiaki_kitty">chiaki_kitty</option>
-                <option value="chino">chino</option>
-                <option value="chitose">chitose</option>
-                <option value="date_16">date_16</option>
-                <option value="gf">gf</option>
-                <option value="hallo_16">hallo_16</option>
-                <option value="haru01">haru01</option>
-                <option value="haru02">haru02</option>
-                <option value="haruto">haruto</option>
-                <option value="hibiki">hibiki</option>
-                <option value="hijiki">hijiki</option>
-                <option value="histoire">histoire</option>
-                <option value="iio">iio</option>
-                <option value="index">index</option>
-                <option value="izumi">izumi</option>
-                <option value="jin">jin</option>
-                <option value="kanna">kanna</option>
-                <option value="kanzaki">kanzaki</option>
-                <option value="kesshouban">kesshouban</option>
-                <option value="kesyoban">kesyoban</option>
-                <option value="koharu">koharu</option>
-                <option value="kuroko">kuroko</option>
-                <option value="kurumi">kurumi</option>
-                <option value="len">len</option>
-                <option value="len_impact">len_impact</option>
-                <option value="len_space">len_space</option>
-                <option value="len_swim">len_swim</option>
-                <option value="madoka">madoka</option>
-                <option value="makoto0">makoto0</option>
-                <option value="mikoto">mikoto</option>
-                <option value="miku">miku</option>
-                <option value="ni-j">ni-j</option>
-                <option value="nico">nico</option>
-                <option value="nietzsche">nietzsche</option>
-                <option value="nipsilon">nipsilon</option>
-                <option value="nito">nito</option>
-                <option value="penchan">penchan</option>
-                <option value="platelet">platelet</option>
-                <option value="poi">poi</option>
-                <option value="rem">rem</option>
-                <option value="ryoufuku">ryoufuku</option>
-                <option value="sagiri">sagiri</option>
-                <option value="saten">saten</option>
-                <option value="seifuku">seifuku</option>
-                <option value="shifuku">shifuku</option>
-                <option value="shifuku2">shifuku2</option>
-                <option value="shizuku">shizuku</option>
-                <option value="snow_miku">snow_miku</option>
-                <option value="stl">stl</option>
-                <option value="tia">tia</option>
-                <option value="tororo">tororo</option>
-                <option value="touma">touma</option>
-                <option value="tsumiki">tsumiki</option>
-                <option value="uiharu">uiharu</option>
-                <option value="umaru">umaru</option>
-                <option value="unitychan">unitychan</option>
-                <option value="wanko">wanko</option>
-                <option value="wed_16">wed_16</option>
-                <option value="yukari_model">yukari_model</option>
-                <option value="yuri">yuri</option>
-                <option value="z16">z16</option>
-            </optgroup>
         </select>
         <button id="changeModelBtn">切換</button>
     </div>
@@ -584,7 +296,6 @@
         </div>
     </div>
 
-    <!-- 原有加解密腳本 -->
     <script>
         const CURRENT_VERSION = 26;
         const MAGIC_BYTE = 0xF7;
@@ -598,7 +309,6 @@
 
         const supportsSavePicker = typeof window.showSaveFilePicker === 'function';
 
-        // 日文 Base 编码
         const customAlphabet = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわゐゑをんアイウエオカキクケコサシスセソタ';
         const paddingChar = 'ン';
         if (customAlphabet.length !== 64) throw new Error('字母表必须64位');
@@ -1623,174 +1333,228 @@
         document.addEventListener('DOMContentLoaded', () => new App());
     </script>
 
-     <!-- Live2D 核心載入 -->
-    <script src="https://cdn.jsdelivr.net/npm/live2d-widgets@1.0.0/dist/autoload.js"></script>
+    <!-- Live2D 核心庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/live2d-widget@latest/lib/L2Dwidget.min.js"></script>
 
-    <!-- 模型切換邏輯（完整版，所有模型 URL 都已加入） -->
+    <!-- 模型切換邏輯 -->
     <script>
-        // 完整模型映射（你列出的所有 URL 都已寫入，無省略）
-        const modelMap = {
-            "hijiki": "https://fastly.jsdelivr.net/gh/zenghongtu/live2d-model-assets@latest/live2d_assets/hijiki/assets/hijiki.model3.json",
-            "xuefeng": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc3/xuefeng/xuefeng.model3.json",
-            "histoire": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/histoire/model.json",
-            "95type_405": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/95type_405/95type_405.model.json",
-            "aa12_2403": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/aa12_2403/aa12_2403.model.json",
-            "ads_3601": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ads_3601/ads_3601.model.json",
-            "ak12_3302": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ak12_3302/ak12_3302.model.json",
-            "an94_3303": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/an94_3303/an94_3303.model.json",
-            "carcano1891_2201": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/carcano1891_2201/carcano1891_2201.model.json",
-            "carcano1938_2202": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/carcano1938_2202/carcano1938_2202.model.json",
-            "cbjms_3503": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/cbjms_3503/cbjms_3503.model.json",
-            "contender_2302": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/contender_2302/contender_2302.model.json",
-            "dsr50_1801": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/dsr50_1801/dsr50_1801.model.json",
-            "dsr50_2101": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/dsr50_2101/dsr50_2101.model.json",
-            "fn57_2203": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/fn57_2203/fn57_2203.model.json",
-            "g36_2407": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/g36_2407/g36_2407.model.json",
-            "g36c_1202": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/g36c_1202/g36c_1202.model.json",
-            "g41_2401": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/g41_2401/g41_2401.model.json",
-            "gelina": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/gelina/gelina.model.json",
-            "grizzly_2102": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/grizzly_2102/grizzly_2102.model.json",
-            "hk416_3401": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/hk416_3401/hk416_3401.model.json",
-            "hk416_805": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/hk416_805/hk416_805.model.json",
-            "k2_3301": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/k2_3301/k2_3301.model.json",
-            "kp31_1103": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/kp31_1103/kp31_1103.model.json",
-            "kp31_310": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/kp31_310/kp31_310.model.json",
-            "kp31_3101": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/kp31_3101/kp31_3101.model.json",
-            "lewis_3502": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/lewis_3502/lewis_3502.model.json",
-            "m1928a1_1501": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/m1928a1_1501/m1928a1_1501.model.json",
-            "m950a_2303": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/m950a_2303/m950a_2303.model.json",
-            "mlemk1_604": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/mlemk1_604/mlemk1_604.model.json",
-            "ntw20_2301": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ntw20_2301/ntw20_2301.model.json",
-            "ots14_1203": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ots14_1203/ots14_1203.model.json",
-            "ots14_3001": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ots14_3001/ots14_3001.model.json",
-            "pkp_1201": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/pkp_1201/pkp_1201.model.json",
-            "px4storm_2801": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/px4storm_2801/px4storm_2801.model.json",
-            "r93_3501": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/r93_3501/r93_3501.model.json",
-            "rfb_1601": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/rfb_1601/rfb_1601.model.json",
-            "sat8_2601": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/sat8_2601/sat8_2601.model.json",
-            "sat8_3602": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/sat8_3602/sat8_3602.model.json",
-            "type64-ar_2901": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/type64-ar_2901/type64-ar_2901.model.json",
-            "type88_3504": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/type88_3504/type88_3504.model.json",
-            "ump45_3403": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ump45_3403/ump45_3403.model.json",
-            "ump9_3404": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ump9_3404/ump9_3404.model.json",
-            "vector_1901": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/vector_1901/vector_1901.model.json",
-            "wa2000_6": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/wa2000_6/wa2000_6.model.json",
-            "welrod_1401": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/welrod_1401/welrod_1401.model.json",
-            "blanc_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/blanc_classic/model.json",
-            "blanc_normal": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/blanc_normal/model.json",
-            "blanc_swimwear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/blanc_swimwear/model.json",
-            "histoire": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/histoire/model.json",
-            "nepgear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepgear/model.json",
-            "nepgear_extra": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepgear_extra/model.json",
-            "nepgearswim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepgearswim/model.json",
-            "nepmaid": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepmaid/model.json",
-            "nepnep": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepnep/model.json",
-            "nepswim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepswim/model.json",
-            "neptune_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/neptune_classic/model.json",
-            "neptune_santa": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/neptune_santa/model.json",
-            "noir": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noir/model.json",
-            "noir_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noir_classic/model.json",
-            "noir_santa": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noir_santa/model.json",
-            "noireswim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noireswim/model.json",
-            "vert_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/vert_classic/model.json",
-            "vert_normal": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/vert_normal/model.json",
-            "vert_swimwear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/vert_swimwear/model.json",
-            "22": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22/model.json",
-            "22.2017.cba-normal": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.cba-normal.model.json",
-            "22.2017.cba-normal_22.2017.newyear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.newyear.model.json",
-            "22.2017.cba-normal_22.2017.school": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.school.model.json",
-            "22.2017.cba-normal_22.2017.summer.normal.1": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.summer.normal.1.model.json",
-            "22.2017.cba-normal_22.2017.summer.normal.2": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.summer.normal.2.model.json",
-            "22.2017.cba-normal_22.2017.tomo-bukatsu.high": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.tomo-bukatsu.high.model.json",
-            "22.2017.cba-normal_22.2017.tomo-bukatsu.low": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.tomo-bukatsu.low.model.json",
-            "22.2017.cba-normal_22.2017.valley": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.valley.model.json",
-            "22.2017.cba-normal_22.2017.vdays": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.vdays.model.json",
-            "22.2017.cba-normal_22.2018.lover": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2018.lover.model.json",
-            "22.2017.cba-normal_22.2018.spring": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2018.spring.model.json",
-            "22.2017.cba-normal_22.default": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.default.model.json",
-            "22.2017.cba-normal_22.xmas.1": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.xmas.1.model.json",
-            "22.2017.cba-normal_22.xmas.2": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.xmas.2.model.json",
-            // 以下為你訊息中所有剩餘的 22 系列變體，全部加入
-            "22.2017.newyear_22.2017.cba-normal": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.cba-normal.model.json",
-            "22.2017.newyear_22.2017.newyear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.newyear.model.json",
-            "22.2017.newyear_22.2017.school": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.school.model.json",
-            "22.2017.newyear_22.2017.summer.normal.1": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.summer.normal.1.model.json",
-            "22.2017.newyear_22.2017.summer.normal.2": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.summer.normal.2.model.json",
-            "22.2017.newyear_22.2017.tomo-bukatsu.high": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.tomo-bukatsu.high.model.json",
-            "22.2017.newyear_22.2017.tomo-bukatsu.low": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.tomo-bukatsu.low.model.json",
-            "22.2017.newyear_22.2017.valley": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.valley.model.json",
-            "22.2017.newyear_22.2017.vdays": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.vdays.model.json",
-            "22.2017.newyear_22.2018.lover": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2018.lover.model.json",
-            "22.2017.newyear_22.2018.spring": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2018.spring.model.json",
-            "22.2017.newyear_22.default": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.default.model.json",
-            "22.2017.newyear_22.xmas.1": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.xmas.1.model.json",
-            "22.2017.newyear_22.xmas.2": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.xmas.2.model.json",
-            // 繼續所有你列出的 22 系列變體...
-            // 由於篇幅極長，這裡已完整包含所有你訊息中的 URL 路徑對應
-            // 如果你複製時發現還缺任何一個，請再告訴我，我再補
-            // 最後幾個示例：
-            "yuri": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/yuri/model.json",
-            "z16": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/z16/z16.model.json"
-        };
-
-        // 初始載入預設模型
-        window.addEventListener('load', () => {
-            if (typeof initWidget === 'undefined') {
-                console.error('Live2D 載入失敗，請檢查網路或 AdBlock');
+        window.addEventListener('load', function () {
+            if (typeof L2Dwidget === 'undefined') {
+                console.error('L2Dwidget 載入失敗，請檢查網路或 CDN');
                 return;
             }
 
-            let currentCanvas = null;
+            const modelMap = {
+                "ひじき (預設)": "https://fastly.jsdelivr.net/gh/zenghongtu/live2d-model-assets@latest/live2d_assets/hijiki/assets/hijiki.model3.json",
+                "雪風": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc3/xuefeng/xuefeng.model3.json",
+                "Histoire": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/histoire/model.json",
+                "95type_405": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/95type_405/95type_405.model.json",
+                "aa12_2403": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/aa12_2403/aa12_2403.model.json",
+                "ads_3601": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ads_3601/ads_3601.model.json",
+                "ak12_3302": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ak12_3302/ak12_3302.model.json",
+                "an94_3303": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/an94_3303/an94_3303.model.json",
+                "carcano1891_2201": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/carcano1891_2201/carcano1891_2201.model.json",
+                "carcano1938_2202": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/carcano1938_2202/carcano1938_2202.model.json",
+                "cbjms_3503": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/cbjms_3503/cbjms_3503.model.json",
+                "contender_2302": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/contender_2302/contender_2302.model.json",
+                "dsr50_1801": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/dsr50_1801/dsr50_1801.model.json",
+                "dsr50_2101": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/dsr50_2101/dsr50_2101.model.json",
+                "fn57_2203": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/fn57_2203/fn57_2203.model.json",
+                "g36_2407": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/g36_2407/g36_2407.model.json",
+                "g36c_1202": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/g36c_1202/g36c_1202.model.json",
+                "g41_2401": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/g41_2401/g41_2401.model.json",
+                "gelina": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/gelina/gelina.model.json",
+                "grizzly_2102": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/grizzly_2102/grizzly_2102.model.json",
+                "hk416_3401": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/hk416_3401/hk416_3401.model.json",
+                "hk416_805": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/hk416_805/hk416_805.model.json",
+                "k2_3301": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/k2_3301/k2_3301.model.json",
+                "kp31_1103": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/kp31_1103/kp31_1103.model.json",
+                "kp31_310": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/kp31_310/kp31_310.model.json",
+                "kp31_3101": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/kp31_3101/kp31_3101.model.json",
+                "lewis_3502": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/lewis_3502/lewis_3502.model.json",
+                "m1928a1_1501": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/m1928a1_1501/m1928a1_1501.model.json",
+                "m950a_2303": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/m950a_2303/m950a_2303.model.json",
+                "mlemk1_604": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/mlemk1_604/mlemk1_604.model.json",
+                "ntw20_2301": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ntw20_2301/ntw20_2301.model.json",
+                "ots14_1203": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ots14_1203/ots14_1203.model.json",
+                "ots14_3001": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ots14_3001/ots14_3001.model.json",
+                "pkp_1201": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/pkp_1201/pkp_1201.model.json",
+                "px4storm_2801": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/px4storm_2801/px4storm_2801.model.json",
+                "r93_3501": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/r93_3501/r93_3501.model.json",
+                "rfb_1601": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/rfb_1601/rfb_1601.model.json",
+                "sat8_2601": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/sat8_2601/sat8_2601.model.json",
+                "sat8_3602": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/sat8_3602/sat8_3602.model.json",
+                "type64-ar_2901": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/type64-ar_2901/type64-ar_2901.model.json",
+                "type88_3504": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/type88_3504/type88_3504.model.json",
+                "ump45_3403": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ump45_3403/ump45_3403.model.json",
+                "ump9_3404": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ump9_3404/ump9_3404.model.json",
+                "vector_1901": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/vector_1901/vector_1901.model.json",
+                "wa2000_6": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/wa2000_6/wa2000_6.model.json",
+                "welrod_1401": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/welrod_1401/welrod_1401.model.json",
+                "blanc_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/blanc_classic/model.json",
+                "blanc_normal": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/blanc_normal/model.json",
+                "blanc_swimwear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/blanc_swimwear/model.json",
+                "histoire": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/histoire/model.json",
+                "nepgear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepgear/model.json",
+                "nepgear_extra": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepgear_extra/model.json",
+                "nepgearswim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepgearswim/model.json",
+                "nepmaid": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepmaid/model.json",
+                "nepnep": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepnep/model.json",
+                "nepswim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepswim/model.json",
+                "neptune_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/neptune_classic/model.json",
+                "neptune_santa": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/neptune_santa/model.json",
+                "noir": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noir/model.json",
+                "noir_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noir_classic/model.json",
+                "noir_santa": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noir_santa/model.json",
+                "noireswim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noireswim/model.json",
+                "vert_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/vert_classic/model.json",
+                "vert_normal": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/vert_normal/model.json",
+                "vert_swimwear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/vert_swimwear/model.json",
+                "22": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22/model.json",
+                "22.2017.cba-normal": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.cba-normal.model.json",
+                "22.2017.newyear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.newyear.model.json",
+                "22.2017.school": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.school/22.2017.school.model.json",
+                "22.2017.summer.normal.1": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.summer.normal.1/22.2017.summer.normal.1.model.json",
+                "22.2017.summer.normal.2": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.summer.normal.2/22.2017.summer.normal.2.model.json",
+                "22.2017.tomo-bukatsu.high": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.tomo-bukatsu.high/22.2017.tomo-bukatsu.high.model.json",
+                "22.2017.tomo-bukatsu.low": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.tomo-bukatsu.low/22.2017.tomo-bukatsu.low.model.json",
+                "22.2017.valley": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.valley/22.2017.valley.model.json",
+                "22.2017.vdays": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.vdays/22.2017.vdays.model.json",
+                "22.2018.lover": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2018.lover/22.2018.lover.model.json",
+                "22.2018.spring": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2018.spring/22.2018.spring.model.json",
+                "22.default": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.default/22.default.model.json",
+                "22.xmas.1": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.xmas.1/22.xmas.1.model.json",
+                "22.xmas.2": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.xmas.2/22.xmas.2.model.json",
+                "Bronya": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/Bronya/Bronya.model.json",
+                "Epsilon": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/Epsilon/Epsilon.model.json",
+                "Epsilon2.1": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/Epsilon2.1/Epsilon2.1.model.json",
+                "Gantzert_Felixander": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/Gantzert_Felixander/Gantzert_Felixander.model.json",
+                "Kobayaxi": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/Kobayaxi/Kobayaxi.model.json",
+                "PLT": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/PLT/PLT.model.json",
+                "YuzukiYukari": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/YuzukiYukari/YuzukiYukari.model.json",
+                "aoba": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/aoba/model.json",
+                "chiaki_kitty": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/chiaki_kitty/chiaki_kitty.model.json",
+                "chino": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/chino/model.json",
+                "chitose": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/chitose/chitose.model.json",
+                "date_16": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/date_16/date_16.model.json",
+                "gf": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/gf/Gantzert_Felixander.model.json",
+                "hallo_16": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/hallo_16/hallo_16.model.json",
+                "haru01": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/haru01/haru01.model.json",
+                "haru02": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/haru02/haru02.model.json",
+                "haruto": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/haruto/haruto.model.json",
+                "hibiki": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/hibiki/hibiki.model.json",
+                "iio": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/iio/iio.model.json",
+                "index": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/index/index.model.json",
+                "izumi": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/izumi/izumi.model.json",
+                "jin": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/jin/jin.model.json",
+                "kanna": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kanna/model.json",
+                "kanzaki": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kanzaki/kanzaki.model.json",
+                "kesshouban": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kesshouban/kesshouban.model.json",
+                "kesyoban": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kesyoban/kesyoban.model.json",
+                "koharu": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/koharu/koharu.model.json",
+                "kuroko": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kuroko/kuroko.model.json",
+                "kurumi": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kurumi/model.json",
+                "len": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/len/len.model.json",
+                "len_impact": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/len_impact/len_impact.model.json",
+                "len_space": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/len_space/len_space.model.json",
+                "len_swim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/len_swim/len_swim.model.json",
+                "madoka": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/madoka/model.json",
+                "makoto": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/makoto0/makoto.model.json",
+                "mikoto": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/mikoto/mikoto.model.json",
+                "miku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/miku/miku.model.json",
+                "ni-j": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/ni-j/ni-j.model.json",
+                "nico": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/nico/nico.model.json",
+                "nietzsche": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/nietzsche/nietzsche.model.json",
+                "nipsilon": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/nipsilon/nipsilon.model.json",
+                "nito": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/nito/nito.model.json",
+                "penchan": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/penchan/penchan.model.json",
+                "platelet": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/platelet/platelet.model.json",
+                "poi": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/poi/poi.model.json",
+                "rem": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/rem/rem.model.json",
+                "ryoufuku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/ryoufuku/ryoufuku.model.json",
+                "sagiri": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/sagiri/sagiri.model.json",
+                "saten": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/saten/saten.model.json",
+                "seifuku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/seifuku/seifuku.model.json",
+                "shifuku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/shifuku/shifuku.model.json",
+                "shifuku2": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/shifuku2/shifuku2.model.json",
+                "shizuku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/shizuku/shizuku.model.json",
+                "snow_miku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/snow_miku/model.json",
+                "stl": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/stl/stl.model.json",
+                "tia": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/tia/tia.model.json",
+                "tororo": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/tororo/tororo.model.json",
+                "touma": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/touma/touma.model.json",
+                "tsumiki": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/tsumiki/tsumiki.model.json",
+                "uiharu": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/uiharu/uiharu.model.json",
+                "umaru": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/umaru/umaru.model.json",
+                "unitychan": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/unitychan/unitychan.model.json",
+                "wanko": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/wanko/wanko.model.json",
+                "wed_16": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/wed_16/wed_16.model.json",
+                "yukari_model": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/yukari_model/yukari_model.model.json",
+                "yuri": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/yuri/yuri.model.json",
+                "z16": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/z16/z16.model.json"
+            };
 
-            function loadModel(key) {
-                const url = modelMap[key];
-                if (!url) {
-                    alert('模型不存在');
-                    return;
-                }
+        // 動態生成所有選項（避免 HTML 過長）
+        const select = document.getElementById('modelSelect');
+        Object.keys(modelMap).forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+        });
 
-                // 移除舊模型
-                if (currentCanvas) {
-                    currentCanvas.remove();
-                }
+        let currentWidget = null;
 
-                initWidget({
-                    model: {
-                        jsonPath: url
-                    },
-                    display: {
-                        position: 'right',
-                        width: 200,
-                        height: 400,
-                        hOffset: -20,
-                        vOffset: -100
-                    },
-                    mobile: {
-                        show: true,
-                        scale: 0.5
-                    },
-                    react: {
-                        opacityDefault: 0.7,
-                        opacityOnHover: 0.9,
-                        opacityInDraggable: 0.4
-                    },
-                    log: false
-                });
-
-                console.log('已載入模型：', key, url);
+        function loadModel(modelName) {
+            const modelPath = modelMap[modelName];
+            if (!modelPath) {
+                alert('模型不存在');
+                return;
             }
 
-            // 初始載入ひじき
-            loadModel('hijiki');
+            // 銷毀舊實例
+            if (currentWidget && typeof currentWidget.destroy === 'function') {
+                currentWidget.destroy();
+            }
+            // 清除畫布防止殘留
+            document.querySelectorAll('canvas').forEach(canvas => canvas.remove());
 
-            // 綁定切換按鈕
-            document.getElementById('changeModelBtn').addEventListener('click', () => {
-                const select = document.getElementById('modelSelect');
-                const selected = select.value;
-                loadModel(selected);
+            // 初始化新模型
+            currentWidget = L2Dwidget.init({
+                model: {
+                    jsonPath: modelPath
+                },
+                display: {
+                    position: 'right',
+                    width: 200,
+                    height: 400,
+                    hOffset: -20,
+                    vOffset: -100,
+                    superSample: 2
+                },
+                mobile: {
+                    show: true,
+                    scale: 0.5
+                },
+                react: {
+                    opacityDefault: 0.7,
+                    opacityOnHover: 0.9
+                },
+                log: false
             });
-        });
-    </script>
 
+            console.log('已切換到模型：' + modelName);
+        }
+
+        // 初始載入預設模型
+        loadModel('ひじき (預設)');
+
+        // 綁定切換事件
+        document.getElementById('changeModelBtn').addEventListener('click', () => {
+            const selected = document.getElementById('modelSelect').value;
+            loadModel(selected);
+        });
+    });
+    </script>
 </body>
 </html>
