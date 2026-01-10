@@ -83,13 +83,12 @@
         .toast.error { background: #ef4444; }
         .toast.info { background: #3b82f6; }
         .toast.show { opacity: 1; }
-        /* 强制 Live2D 浮层最上，避免被玻璃容器盖住 */
-        .live2d-container, .live2d, canvas {
+        /* 強制 Live2D 畫布最上層 */
+        .live2d-container, .live2d, canvas.live2d {
             z-index: 9999 !important;
             pointer-events: auto !important;
         }
     </style>
-    <!-- Live2D 核心 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/live2d-widgets@1.0.0/dist/waifu.css"/>
 </head>
 <body class="flex items-center justify-center p-4">
@@ -254,6 +253,7 @@
         </div>
     </div>
 
+    <!-- 完整加解密核心腳本 -->
     <script>
         const CURRENT_VERSION = 26;
         const MAGIC_BYTE = 0xF7;
@@ -267,7 +267,6 @@
 
         const supportsSavePicker = typeof window.showSaveFilePicker === 'function';
 
-        // 日文 Base 编码
         const customAlphabet = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわゐゑをんアイウエオカキクケコサシスセソタ';
         const paddingChar = 'ン';
         if (customAlphabet.length !== 64) throw new Error('字母表必须64位');
@@ -1292,29 +1291,189 @@
         document.addEventListener('DOMContentLoaded', () => new App());
     </script>
 
-    <!-- Live2D 看板娘 - 使用小体积官方 hijiki 模型（解决 50MB 限制） -->
+    <!-- Live2D 看板娘 - 完整模型索引版（全部你提供的模型） -->
     <script src="https://cdn.jsdelivr.net/npm/live2d-widgets@1.0.0/dist/autoload.js"></script>
     <script>
+        // 你提供的全部模型完整索引（已全部加入，鍵名清晰）
+        const modelIndex = {
+            "gfl_95type_405": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/95type_405/95type_405.model.json",
+            "gfl_aa12_2403": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/aa12_2403/aa12_2403.model.json",
+            "gfl_ads_3601": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ads_3601/ads_3601.model.json",
+            "gfl_ak12_3302": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ak12_3302/ak12_3302.model.json",
+            "gfl_an94_3303": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/an94_3303/an94_3303.model.json",
+            "gfl_carcano1891_2201": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/carcano1891_2201/carcano1891_2201.model.json",
+            "gfl_carcano1938_2202": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/carcano1938_2202/carcano1938_2202.model.json",
+            "gfl_cbjms_3503": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/cbjms_3503/cbjms_3503.model.json",
+            "gfl_contender_2302": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/contender_2302/contender_2302.model.json",
+            "gfl_dsr50_1801": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/dsr50_1801/dsr50_1801.model.json",
+            "gfl_dsr50_2101": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/dsr50_2101/dsr50_2101.model.json",
+            "gfl_fn57_2203": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/fn57_2203/fn57_2203.model.json",
+            "gfl_g36_2407": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/g36_2407/g36_2407.model.json",
+            "gfl_g36c_1202": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/g36c_1202/g36c_1202.model.json",
+            "gfl_g41_2401": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/g41_2401/g41_2401.model.json",
+            "gfl_gelina": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/gelina/gelina.model.json",
+            "gfl_grizzly_2102": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/grizzly_2102/grizzly_2102.model.json",
+            "gfl_hk416_3401": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/hk416_3401/hk416_3401.model.json",
+            "gfl_hk416_805": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/hk416_805/hk416_805.model.json",
+            "gfl_k2_3301": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/k2_3301/k2_3301.model.json",
+            "gfl_kp31_1103": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/kp31_1103/kp31_1103.model.json",
+            "gfl_kp31_310": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/kp31_310/kp31_310.model.json",
+            "gfl_kp31_3101": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/kp31_3101/kp31_3101.model.json",
+            "gfl_lewis_3502": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/lewis_3502/lewis_3502.model.json",
+            "gfl_m1928a1_1501": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/m1928a1_1501/m1928a1_1501.model.json",
+            "gfl_m950a_2303": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/m950a_2303/m950a_2303.model.json",
+            "gfl_mlemk1_604": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/mlemk1_604/mlemk1_604.model.json",
+            "gfl_ntw20_2301": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ntw20_2301/ntw20_2301.model.json",
+            "gfl_ots14_1203": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ots14_1203/ots14_1203.model.json",
+            "gfl_ots14_3001": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ots14_3001/ots14_3001.model.json",
+            "gfl_pkp_1201": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/pkp_1201/pkp_1201.model.json",
+            "gfl_px4storm_2801": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/px4storm_2801/px4storm_2801.model.json",
+            "gfl_r93_3501": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/r93_3501/r93_3501.model.json",
+            "gfl_rfb_1601": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/rfb_1601/rfb_1601.model.json",
+            "gfl_sat8_2601": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/sat8_2601/sat8_2601.model.json",
+            "gfl_sat8_3602": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/sat8_3602/sat8_3602.model.json",
+            "gfl_type64-ar_2901": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/type64-ar_2901/type64-ar_2901.model.json",
+            "gfl_type88_3504": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/type88_3504/type88_3504.model.json",
+            "gfl_ump45_3403": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ump45_3403/ump45_3403.model.json",
+            "gfl_ump9_3404": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/ump9_3404/ump9_3404.model.json",
+            "gfl_vector_1901": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/vector_1901/vector_1901.model.json",
+            "gfl_wa2000_6": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/wa2000_6/wa2000_6.model.json",
+            "gfl_welrod_1401": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/Girls'%20Frontline/welrod_1401/welrod_1401.model.json",
+            "nep_blanc_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/blanc_classic/model.json",
+            "nep_blanc_normal": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/blanc_normal/model.json",
+            "nep_blanc_swimwear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/blanc_swimwear/model.json",
+            "nep_histoire": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/histoire/model.json",
+            "nep_nepgear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepgear/model.json",
+            "nep_nepgear_extra": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepgear_extra/model.json",
+            "nep_nepgearswim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepgearswim/model.json",
+            "nep_nepmaid": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepmaid/model.json",
+            "nep_nepnep": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepnep/model.json",
+            "nep_nepswim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/nepswim/model.json",
+            "nep_neptune_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/neptune_classic/model.json",
+            "nep_neptune_santa": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/neptune_santa/model.json",
+            "nep_noir": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noir/model.json",
+            "nep_noir_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noir_classic/model.json",
+            "nep_noir_santa": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noir_santa/model.json",
+            "nep_noireswim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/noireswim/model.json",
+            "nep_vert_classic": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/vert_classic/model.json",
+            "nep_vert_normal": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/vert_normal/model.json",
+            "nep_vert_swimwear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/HyperdimensionNeptunia/vert_swimwear/model.json",
+            "moc_22": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22/model.json",
+            "moc_22_2017_cba_normal": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.cba-normal/22.2017.cba-normal.model.json",
+            "moc_22_2017_newyear": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.newyear/22.2017.newyear.model.json",
+            "moc_22_2017_school": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.school/22.2017.school.model.json",
+            "moc_22_2017_summer_normal_1": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.summer.normal.1/22.2017.summer.normal.1.model.json",
+            "moc_22_2017_summer_normal_2": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.summer.normal.2/22.2017.summer.normal.2.model.json",
+            "moc_22_2017_tomo_bukatsu_high": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.tomo-bukatsu.high/22.2017.tomo-bukatsu.high.model.json",
+            "moc_22_2017_tomo_bukatsu_low": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.tomo-bukatsu.low/22.2017.tomo-bukatsu.low.model.json",
+            "moc_22_2017_valley": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.valley/22.2017.valley.model.json",
+            "moc_22_2017_vdays": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2017.vdays/22.2017.vdays.model.json",
+            "moc_22_2018_lover": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2018.lover/22.2018.lover.model.json",
+            "moc_22_2018_spring": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.2018.spring/22.2018.spring.model.json",
+            "moc_22_default": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.default/22.default.model.json",
+            "moc_22_xmas_1": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.xmas.1/22.xmas.1.model.json",
+            "moc_22_xmas_2": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/22.xmas.2/22.xmas.2.model.json",
+            "moc_Bronya": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/Bronya/Bronya.model.json",
+            "moc_Epsilon": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/Epsilon/Epsilon.model.json",
+            "moc_Epsilon2.1": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/Epsilon2.1/Epsilon2.1.model.json",
+            "moc_Gantzert_Felixander": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/Gantzert_Felixander/Gantzert_Felixander.model.json",
+            "moc_Kobayaxi": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/Kobayaxi/Kobayaxi.model.json",
+            "moc_PLT": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/PLT/PLT.model.json",
+            "moc_YuzukiYukari": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/YuzukiYukari/YuzukiYukari.model.json",
+            "moc_aoba": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/aoba/model.json",
+            "moc_chiaki_kitty": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/chiaki_kitty/chiaki_kitty.model.json",
+            "moc_chino": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/chino/model.json",
+            "moc_chitose": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/chitose/chitose.model.json",
+            "moc_date_16": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/date_16/date_16.model.json",
+            "moc_gf": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/gf/Gantzert_Felixander.model.json",
+            "moc_hallo_16": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/hallo_16/hallo_16.model.json",
+            "moc_haru01": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/haru01/haru01.model.json",
+            "moc_haru02": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/haru02/haru02.model.json",
+            "moc_haruto": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/haruto/haruto.model.json",
+            "moc_hibiki": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/hibiki/hibiki.model.json",
+            "moc_hijiki": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/hijiki/hijiki.model.json",
+            "moc_histoire": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/histoire/histoire.model.json",
+            "moc_iio": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/iio/iio.model.json",
+            "moc_index": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/index/index.model.json",
+            "moc_izumi": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/izumi/izumi.model.json",
+            "moc_jin": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/jin/jin.model.json",
+            "moc_kanna": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kanna/model.json",
+            "moc_kanzaki": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kanzaki/kanzaki.model.json",
+            "moc_kesshouban": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kesshouban/model.json",
+            "moc_kesyoban": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kesyoban/kesyoban.model.json",
+            "moc_koharu": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/koharu/koharu.model.json",
+            "moc_kuroko": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kuroko/kuroko.model.json",
+            "moc_kurumi": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/kurumi/model.json",
+            "moc_len": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/len/len.model.json",
+            "moc_len_impact": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/len_impact/len_impact.model.json",
+            "moc_len_space": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/len_space/len_space.model.json",
+            "moc_len_swim": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/len_swim/len_swim.model.json",
+            "moc_madoka": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/madoka/model.json",
+            "moc_makoto": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/makoto0/makoto.model.json",
+            "moc_mikoto": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/mikoto/mikoto.model.json",
+            "moc_miku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/miku/miku.model.json",
+            "moc_nep": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/nep/model.json",
+            "moc_nepmaid": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/nepmaid/nepmaid.model.json",
+            "moc_neptune": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/neptune/model.json",
+            "moc_ni-j": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/ni-j/ni-j.model.json",
+            "moc_nico": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/nico/nico.model.json",
+            "moc_nietzsche": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/nietzsche/nietzsche.model.json",
+            "moc_nipsilon": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/nipsilon/nipsilon.model.json",
+            "moc_nito": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/nito/nito.model.json",
+            "moc_penchan": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/penchan/penchan.model.json",
+            "moc_platelet": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/platelet/model.json",
+            "moc_poi": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/poi/poi.model.json",
+            "moc_rem": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/rem/model.json",
+            "moc_ryoufuku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/ryoufuku/ryoufuku.model.json",
+            "moc_sagiri": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/sagiri/model.json",
+            "moc_saten": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/saten/saten.model.json",
+            "moc_seifuku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/seifuku/seifuku.model.json",
+            "moc_shifuku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/shifuku/shifuku.model.json",
+            "moc_shifuku2": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/shifuku2/shifuku2.model.json",
+            "moc_shizuku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/shizuku/shizuku.model.json",
+            "moc_snow_miku": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/snow_miku/model.json",
+            "moc_stl": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/stl/stl.model.json",
+            "moc_tia": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/tia/tia.model.json",
+            "moc_tororo": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/tororo/tororo.model.json",
+            "moc_touma": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/touma/touma.model.json",
+            "moc_tsumiki": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/tsumiki/tsumiki.model.json",
+            "moc_uiharu": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/uiharu/uiharu.model.json",
+            "moc_umaru": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/umaru/model.json",
+            "moc_unitychan": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/unitychan/unitychan.model.json",
+            "moc_wanko": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/wanko/wanko.model.json",
+            "moc_wed_16": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/wed_16/wed_16.model.json",
+            "moc_yukari_model": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/yukari_model/yukari_model.model.json",
+            "moc_yuri": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/yuri/model.json",
+            "moc_z16": "https://raw.githubusercontent.com/zenghongtu/live2d-model-assets/master/assets/moc/z16/z16.model.json",
+            // 安全小模型（推薦，避免載入失敗）
+            "default-safe": "live2d-widget-model-hijiki"
+        };
+
         window.addEventListener('load', function() {
             if (typeof initWidget === 'undefined') {
-                console.error('Live2D 核心脚本加载失败！请检查：1. 网络连接 2. 是否有 AdBlock/扩展阻挡 jsDelivr 3. 浏览器兼容性（推荐最新 Chrome/Edge）');
-                console.error('如果持续失败，可尝试手动下载模型或切换其他小模型');
+                console.error('Live2D 載入失敗，請檢查網路或 AdBlock');
                 return;
             }
 
+            // ★ 只需改這一行就能切換任何模型！（例如改成 'gfl_hk416_3401' 就是 HK416）
+            const selectedKey = "default-safe";  // 預設安全小模型
+            const selectedPath = modelIndex[selectedKey];
+
+            console.log(`正在載入模型：${selectedKey} (${selectedPath})`);
+
             initWidget({
                 model: {
-                    // 官方小体积 hijiki 模型（npm 包，体积小、无 50MB 限制）
-                    use: 'live2d-widget-model-hijiki'
-                    // 如果 use 不生效，换这个完整路径（备用）：
-                    // jsonPath: 'https://cdn.jsdelivr.net/npm/live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json'
+                    // 如果是 live2d-widget-model-xxx 用 use，否則用 jsonPath
+                    ...(selectedPath.startsWith('live2d-widget-model-') 
+                        ? { use: selectedPath }
+                        : { jsonPath: selectedPath })
                 },
                 display: {
                     position: 'right',
                     width: 200,
                     height: 400,
                     hOffset: -20,
-                    vOffset: -100  // 向上抬高，避免盖住底部按钮
+                    vOffset: -100
                 },
                 mobile: {
                     show: true,
@@ -1327,8 +1486,6 @@
                 },
                 log: false
             });
-
-            console.log('Live2D ひじき (小体积官方版) 初始化尝试完成！请检查右下角是否有看板娘出现～');
         });
     </script>
 
