@@ -83,13 +83,13 @@
         .toast.error { background: #ef4444; }
         .toast.info { background: #3b82f6; }
         .toast.show { opacity: 1; }
-        /* 強制 Live2D canvas 浮在最上層，避免被蓋住 */
+        /* 强制 Live2D 浮层最上，避免被玻璃容器盖住 */
         .live2d-container, .live2d, canvas {
             z-index: 9999 !important;
             pointer-events: auto !important;
         }
     </style>
-    <!-- Live2D 核心 CSS（放在 head 確保樣式載入） -->
+    <!-- Live2D 核心 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/live2d-widgets@1.0.0/dist/waifu.css"/>
 </head>
 <body class="flex items-center justify-center p-4">
@@ -1292,27 +1292,29 @@
         document.addEventListener('DOMContentLoaded', () => new App());
     </script>
 
-    <!-- Live2D 看板娘 - 穩定載入 -->
+    <!-- Live2D 看板娘 - 使用小体积官方 hijiki 模型（解决 50MB 限制） -->
     <script src="https://cdn.jsdelivr.net/npm/live2d-widgets@1.0.0/dist/autoload.js"></script>
     <script>
         window.addEventListener('load', function() {
             if (typeof initWidget === 'undefined') {
-                console.error('Live2D widget 初始化函数未找到。可能原因：CDN 載入失敗、網路問題、AdBlock 阻擋、或瀏覽器不相容。');
-                console.error('請嘗試：1. 關閉 AdBlock 2. 用 Chrome/Edge 測試 3. 強制刷新 (Ctrl+F5)');
+                console.error('Live2D 核心脚本加载失败！请检查：1. 网络连接 2. 是否有 AdBlock/扩展阻挡 jsDelivr 3. 浏览器兼容性（推荐最新 Chrome/Edge）');
+                console.error('如果持续失败，可尝试手动下载模型或切换其他小模型');
                 return;
             }
 
             initWidget({
                 model: {
-                    jsonPath: 'https://cdn.jsdelivr.net/gh/zenghongtu/live2d-model-assets@latest/live2d_assets/hijiki/assets/hijiki.model3.json'
+                    // 官方小体积 hijiki 模型（npm 包，体积小、无 50MB 限制）
+                    use: 'live2d-widget-model-hijiki'
+                    // 如果 use 不生效，换这个完整路径（备用）：
+                    // jsonPath: 'https://cdn.jsdelivr.net/npm/live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json'
                 },
                 display: {
-                    superSample: 2,
+                    position: 'right',
                     width: 200,
                     height: 400,
-                    position: 'right',
                     hOffset: -20,
-                    vOffset: -100
+                    vOffset: -100  // 向上抬高，避免盖住底部按钮
                 },
                 mobile: {
                     show: true,
@@ -1326,7 +1328,7 @@
                 log: false
             });
 
-            console.log('Live2D 看板娘 (ひじき) 初始化完成，請檢查右下角區域～');
+            console.log('Live2D ひじき (小体积官方版) 初始化尝试完成！请检查右下角是否有看板娘出现～');
         });
     </script>
 
