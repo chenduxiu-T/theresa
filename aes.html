@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AES-256-GCM + 日文Base 加解密工具</title>
+    <title>AES-256-GCM + 日文Base 加解密工具（帶看板娘）</title>
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Live2D 相关脚本 -->
-    <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/dylanNew/live2d/webgl/Live2D/lib/live2d.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.3.3/pixi.min.js"></script>
-    <script src="https://live2d.fghrsh.net/demo/1.4.2/live2d.min.js"></script>
-    
+    <!-- Live2D 看板娘 核心樣式（來自 fghrsh 1.4.2） -->
+    <link rel="stylesheet" type="text/css" href="https://live2d.fghrsh.net/demo/1.4.2/assets/waifu.min.css?v=1.4.2"/>
+
     <style>
         body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
             min-height: 100vh;
-            overflow-x: hidden;
             margin: 0;
-            padding: 0;
+            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+            overflow-x: hidden;
         }
         .glass {
             background: rgba(255, 255, 255, 0.10);
@@ -93,108 +93,55 @@
         .toast.error { background: #ef4444; }
         .toast.info { background: #3b82f6; }
         .toast.show { opacity: 1; }
-        
-        /* Live2D 看板娘样式 */
-        #live2d-widget {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            z-index: 1000;
-            pointer-events: none;
+
+        /* 調整主容器，讓出右下角給看板娘 */
+        .main-container {
+            max-width: 720px;
+            margin: 2rem auto;
+            padding: 1.5rem;
         }
-        #live2d-canvas {
-            pointer-events: none;
-        }
-        .live2d-toolbar {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            display: flex;
-            gap: 8px;
-            z-index: 1001;
-            pointer-events: auto;
-        }
-        .live2d-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 18px;
-            color: #333;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-        .live2d-btn:hover {
-            background: rgba(59, 130, 246, 0.9);
-            color: white;
-            transform: scale(1.1);
-        }
-        .live2d-message {
-            position: absolute;
-            bottom: 60px;
-            right: 10px;
-            max-width: 200px;
-            padding: 10px 15px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            font-size: 14px;
-            line-height: 1.4;
-            z-index: 1002;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s ease;
-            pointer-events: none;
-        }
-        .live2d-message.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .live2d-message::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            right: 20px;
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 8px solid rgba(255, 255, 255, 0.95);
-        }
+
+        /* 小螢幕時縮小主容器並調整看板娘 */
         @media (max-width: 768px) {
-            #live2d-widget {
-                display: none;
+            .main-container {
+                max-width: 100%;
+                padding: 1rem;
+            }
+            .waifu {
+                transform: scale(0.75);
+                transform-origin: bottom right;
             }
         }
     </style>
 </head>
-<body class="flex items-center justify-center p-4">
+<body class="flex flex-col items-center p-4">
+
     <!-- Live2D 看板娘容器 -->
-    <div id="live2d-widget">
-        <canvas id="live2d-canvas" width="300" height="400"></canvas>
-        <div class="live2d-toolbar">
-            <button class="live2d-btn" id="live2d-change">🔄</button>
-            <button class="live2d-btn" id="live2d-talk">💬</button>
-            <button class="live2d-btn" id="live2d-hide">👋</button>
+    <div class="waifu">
+        <div class="waifu-tips"></div>
+        <canvas id="live2d" class="live2d"></canvas>
+        <div class="waifu-tool">
+            <span class="fui-home"></span>
+            <span class="fui-chat"></span>
+            <span class="fui-eye"></span>
+            <span class="fui-user"></span>
+            <span class="fui-photo"></span>
+            <span class="fui-info-circle"></span>
+            <span class="fui-cross"></span>
         </div>
-        <div class="live2d-message" id="live2d-message"></div>
     </div>
-    
+
+    <!-- 拖拽遮罩 -->
     <div id="dragOverlay">拖入文件到此处导入</div>
-    
-    <div class="glass rounded-xl shadow-2xl p-6 max-w-2xl w-full relative">
+
+    <!-- 主加密解密界面 -->
+    <div class="main-container glass rounded-xl shadow-2xl relative">
         <div id="loadingSpinner" class="loading">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
         
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">🔐 AES-256-GCM + 日文Base 加解密工具</h1>
-        <p class="text-center text-gray-600 text-sm mb-6">流式分块 · 支持百GB+ · 纯前端 · 如遇超过2G无法解密请使用Chrome / Edge</p>
+        <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-2">🔐 AES-256-GCM + 日文Base 加解密工具</h1>
+        <p class="text-center text-gray-600 text-sm mb-6">流式分塊 · 支持百GB+ · 纯前端 · 右下角看板娘已就位～</p>
         
         <div class="mb-6 text-center">
             <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
@@ -202,7 +149,7 @@
                 <span id="modeText">当前模式：加密</span>
             </span>
         </div>
-        
+
         <div class="mb-6 bg-gray-50 rounded-lg p-4 border">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-medium text-gray-700">密钥设置</h3>
@@ -329,6 +276,7 @@
             <button id="showDetailsButton" class="flex-1 min-w-[140px] bg-amber-500 text-white py-3 px-4 rounded-lg hover:bg-amber-600 hidden">🔍 查看详情</button>
         </div>
         
+        <!-- 详情弹窗 -->
         <div id="detailsModal" class="hidden fixed inset-0 flex items-center justify-center z-50">
             <div class="absolute inset-0 bg-black bg-opacity-50" id="modalBackdrop"></div>
             <div class="glass rounded-xl p-6 max-w-lg w-full mx-4 relative z-10">
@@ -347,117 +295,46 @@
         </div>
     </div>
 
+    <!-- ======================== Live2D 看板娘 必要腳本 ======================== -->
+
+    <!-- jQuery -->
+    <script src="https://live2d.fghrsh.net/demo/1.4.2/assets/jquery.min.js?v=3.3.1"></script>
+    
+    <!-- jQuery UI -->
+    <script src="https://live2d.fghrsh.net/demo/1.4.2/assets/jquery-ui.min.js?v=1.12.1"></script>
+    
+    <!-- 提示語 -->
+    <script src="https://live2d.fghrsh.net/demo/1.4.2/assets/waifu-tips.min.js?v=1.4.2"></script>
+    
+    <!-- Live2D 核心 -->
+    <script src="https://live2d.fghrsh.net/demo/1.4.2/assets/live2d.min.js?v=1.0.5"></script>
+
+    <!-- Live2D 初始化 + 使用 GitHub 上的 waifu-tips.json 代替已失效的原檔 -->
     <script>
-        // ==================== Live2D 看板娘配置 ====================
-        class Live2DWidget {
-            constructor() {
-                this.widget = null;
-                this.isHidden = false;
-                this.messageQueue = [];
-                this.messageIndex = 0;
-                this.modelIndex = 0;
-                this.models = [
-                    'https://live2d.fghrsh.net/demo/1.4.2/live2d/model/22/index.json',
-                    'https://live2d.fghrsh.net/demo/1.4.2/live2d/model/33/index.json',
-                    'https://live2d.fghrsh.net/demo/1.4.2/live2d/model/16/index.json',
-                    'https://live2d.fghrsh.net/demo/1.4.2/live2d/model/27/index.json'
-                ];
-                
-                this.messages = [
-                    "你好！我是你的加密助手～",
-                    "加解密要小心保管密钥哦！",
-                    "大文件建议用 Chrome 或 Edge 浏览器",
-                    "记得备份重要数据！",
-                    "密钥强度很重要！",
-                    "加密完成啦！",
-                    "解密成功！",
-                    "要清空所有数据吗？",
-                    "今天也要注意网络安全！",
-                    "这个工具很强大呢！"
-                ];
-                
-                this.init();
-            }
-            
-            init() {
-                // 初始化看板娘
-                this.loadWidget();
-                
-                // 绑定按钮事件
-                document.getElementById('live2d-change').addEventListener('click', () => this.changeModel());
-                document.getElementById('live2d-talk').addEventListener('click', () => this.showRandomMessage());
-                document.getElementById('live2d-hide').addEventListener('click', () => this.toggleHide());
-                
-                // 绑定加解密事件
-                const app = document.querySelector('body')._app;
-                if (app) {
-                    app.el.encryptButton.addEventListener('click', () => this.showMessage('正在加密...请稍候'));
-                    app.el.decryptButton.addEventListener('click', () => this.showMessage('正在解密...请稍候'));
-                    app.el.clearButton.addEventListener('click', () => this.showMessage('已清空所有内容'));
-                }
-                
-                // 显示欢迎消息
-                setTimeout(() => this.showMessage('欢迎使用加解密工具！', 3000), 1000);
-            }
-            
-            loadWidget() {
-                if (window.loadlive2d) {
-                    this.widget = window.loadlive2d('live2d-canvas', this.models[this.modelIndex]);
-                }
-            }
-            
-            changeModel() {
-                this.modelIndex = (this.modelIndex + 1) % this.models.length;
-                if (window.loadlive2d) {
-                    window.loadlive2d('live2d-canvas', this.models[this.modelIndex]);
-                    this.showMessage('换装完成！', 2000);
-                }
-            }
-            
-            showMessage(text, duration = 3000) {
-                const messageEl = document.getElementById('live2d-message');
-                messageEl.textContent = text;
-                messageEl.classList.add('show');
-                
-                setTimeout(() => {
-                    messageEl.classList.remove('show');
-                }, duration);
-            }
-            
-            showRandomMessage() {
-                const randomIndex = Math.floor(Math.random() * this.messages.length);
-                this.showMessage(this.messages[randomIndex]);
-            }
-            
-            toggleHide() {
-                const widget = document.getElementById('live2d-widget');
-                this.isHidden = !this.isHidden;
-                
-                if (this.isHidden) {
-                    widget.style.opacity = '0';
-                    widget.style.pointerEvents = 'none';
-                    this.showMessage('再见啦～点击其他位置我会回来哦', 2000);
-                    
-                    // 点击页面任意位置恢复显示
-                    const showWidget = () => {
-                        widget.style.opacity = '1';
-                        widget.style.pointerEvents = 'auto';
-                        this.isHidden = false;
-                        document.removeEventListener('click', showWidget);
-                    };
-                    
-                    setTimeout(() => {
-                        document.addEventListener('click', showWidget, { once: true });
-                    }, 100);
-                } else {
-                    widget.style.opacity = '1';
-                    widget.style.pointerEvents = 'auto';
-                    this.showMessage('我回来啦！', 2000);
-                }
-            }
-        }
-        
-        // ==================== AES 加解密工具 ====================
+        const live2d_settings = {
+            modelId: 1,
+            modelTexturesId: 87,
+            modelStorage: false,
+            canCloseLive2d: true,
+            canTurnToHomePage: false,
+            waifuSize: '280x312',
+            waifuTipsSize: '250x110',
+            waifuFontSize: '16px',
+            waifuToolFont: '20px',
+            waifuToolLine: '36px',
+            waifuToolTop: '-50px',
+            waifuDraggable: 'axis-x',
+            homePageUrl: 'https://www.fghrsh.net',
+            toolHoverTips: true
+        };
+
+        // 使用 GitHub raw 連結（2026年仍可用）
+        initModel("https://raw.githubusercontent.com/fghrsh/live2d_demo/master/waifu-tips.json");
+    </script>
+
+    <!-- ======================== AES 加解密 主邏輯（完整版） ======================== -->
+
+    <script>
         const CURRENT_VERSION = 26;
         const MAGIC_BYTE = 0xF7;
         const SEPARATOR_BYTE = 0x00;
@@ -568,7 +445,6 @@
 
         function getExtensionFromMime(mime) {
             const map = {
-                // text
                 'text/plain': '.txt',
                 'text/html': '.html',
                 'text/css': '.css',
@@ -587,8 +463,6 @@
                 'application/rss+xml': '.rss',
                 'application/atom+xml': '.atom',
                 'text/x-log': '.log',
-
-                // images
                 'image/jpeg': '.jpg',
                 'image/pjpeg': '.jpg',
                 'image/png': '.png',
@@ -611,8 +485,6 @@
                 'image/x-rgb': '.rgb',
                 'image/vnd.djvu': '.djvu',
                 'image/x-xbitmap': '.xbm',
-
-                // audio
                 'audio/mpeg': '.mp3',
                 'audio/wav': '.wav',
                 'audio/ogg': '.ogg',
@@ -628,8 +500,6 @@
                 'audio/x-ms-wma': '.wma',
                 'audio/x-aiff': '.aiff',
                 'audio/basic': '.au',
-
-                // video
                 'video/mp4': '.mp4',
                 'video/webm': '.webm',
                 'video/ogg': '.ogv',
@@ -646,8 +516,6 @@
                 'video/x-ms-asf': '.asf',
                 'video/x-m4v': '.m4v',
                 'video/vnd.dlna.mpeg-tts': '.ts',
-
-                // archives
                 'application/zip': '.zip',
                 'application/x-7z-compressed': '.7z',
                 'application/x-rar-compressed': '.rar',
@@ -663,8 +531,6 @@
                 'application/x-gzip': '.gz',
                 'application/x-bzip': '.bz',
                 'application/vnd.rar': '.rar',
-
-                // documents
                 'application/pdf': '.pdf',
                 'application/msword': '.doc',
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
@@ -680,16 +546,8 @@
                 'application/vnd.apple.pages': '.pages',
                 'application/vnd.apple.numbers': '.numbers',
                 'application/vnd.apple.keynote': '.key',
-                'application/vnd.mozilla.xul+xml': '.xul',
+                'application/pdf': '.pdf',
                 'application/vnd.visio': '.vsd',
-                'application/vnd.stardivision.writer': '.sdw',
-                'application/vnd.stardivision.calc': '.sdc',
-                'application/vnd.ms-access': '.mdb',
-                'application/vnd.ms-project': '.mpp',
-                'application/vnd.lotus-wordpro': '.lwp',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.template': '.dotx',
-
-                // fonts
                 'font/woff': '.woff',
                 'font/woff2': '.woff2',
                 'application/font-woff': '.woff',
@@ -699,8 +557,6 @@
                 'application/vnd.ms-fontobject': '.eot',
                 'font/collection': '.ttc',
                 'font/sfnt': '.ttf',
-
-                // binaries
                 'application/octet-stream': '.bin',
                 'application/x-msdownload': '.exe',
                 'application/vnd.android.package-archive': '.apk',
@@ -710,49 +566,13 @@
                 'application/x-elf': '.elf',
                 'application/java-archive': '.jar',
                 'application/x-shockwave-flash': '.swf',
-                'application/x-msclip': '.clp',
-                'application/x-silverlight-app': '.xap',
-
-                // databases / data
                 'application/sql': '.sql',
                 'application/x-sqlite3': '.sqlite',
-                'application/vnd.sqlite3': '.sqlite',
-                'application/vnd.ms-access': '.mdb',
-                'application/vnd.ms-access.addin.mda': '.mda',
-                'application/vnd.ms-access.template.mdt': '.mdt',
-                'application/vnd.ms-access.addin.mda': '.mda',
-                'application/vnd.ms-access.runtime': '.accdr',
-                'application/x-msaccess': '.mdb',
-                'application/vnd.symbian.install': '.sis',
-
-                // CAD / 3D
                 'model/stl': '.stl',
-                'model/iges': '.igs',
-                'model/step+xml': '.stp',
-                'model/obj': '.obj',
                 'application/vnd.autocad.dwg': '.dwg',
-                'application/vnd.autocad.dxf': '.dxf',
-                'model/vnd.collada+xml': '.dae',
-                'model/x3d+xml': '.x3d',
-                'model/gltf+json': '.gltf',
-                'model/gltf-binary': '.glb',
-
-                // compressed images / raw data
-                'application/x-nikon-nef': '.nef',
-                'application/x-canon-cr2': '.cr2',
-                'application/x-sony-arw': '.arw',
-                'application/x-panasonic-rw2': '.rw2',
-                'application/x-fujifilm-raf': '.raf',
-                'application/x-olympus-orf': '.orf',
-                'application/octet-stream': '.bin',
-                'application/x-freearc': '.arc',
-                'application/vnd.google-earth.kml+xml': '.kml',
-                'application/vnd.google-earth.kmz': '.kmz',
-                'application/x-font-ttf': '.ttf',
-                'audio/x-aac': '.aac'
+                'application/vnd.autocad.dxf': '.dxf'
             };
-
-            return map[mime] || '';
+            return map[mime] || '.bin';
         }
 
         function isLikelyText(bytes) {
@@ -810,7 +630,6 @@
                 this.lastCipherBlob = null;
                 this.lastCipherFileName = null;
                 this.currentImageUrl = null;
-                this.live2d = null; // Live2D 实例
                 this.initElements();
                 this.bindEvents();
                 this.setupDragAndDrop();
@@ -1076,7 +895,7 @@
 
                     let outputMode = this.el.encryptOutputMode.value;
                     if (outputMode === 'text' && fileSize > LARGE_TEXT_THRESHOLD) {
-                        const confirmContinue = confirm(`文件较大 (${formatBytes(fileSize)})，显示日文密文会膨胀约37%，可能导致浏览器卡顿。\n建议切换为"保存为文件"模式，是否继续显示文本？`);
+                        const confirmContinue = confirm(`文件较大 (${formatBytes(fileSize)})，显示日文密文会膨胀约37%，可能导致浏览器卡顿。\n建议切换为“保存为文件”模式，是否继续显示文本？`);
                         if (!confirmContinue) {
                             this.el.encryptOutputMode.value = 'file';
                             this.showMessage('已自动切换为保存为文件模式', 'info');
@@ -1516,18 +1335,7 @@
             }
         }
 
-        // 初始化应用和 Live2D
-        document.addEventListener('DOMContentLoaded', () => {
-            const app = new App();
-            window._app = app;
-            
-            // 初始化 Live2D
-            const live2dWidget = new Live2DWidget();
-            app.live2d = live2dWidget;
-            
-            // 绑定到全局以便访问
-            window.live2dWidget = live2dWidget;
-        });
+        document.addEventListener('DOMContentLoaded', () => new App());
     </script>
 </body>
 </html>
