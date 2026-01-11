@@ -3,24 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AES-256-GCM + 日文Base 加解密工具（帶看板娘）</title>
-    
-    <!-- Tailwind CSS CDN -->
+    <title>AES-256-GCM + 日文Base 加解密工具（带看板娘）</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Live2D 看板娘 核心樣式（來自 fghrsh 1.4.2） -->
-    <link rel="stylesheet" type="text/css" href="https://live2d.fghrsh.net/demo/1.4.2/assets/waifu.min.css?v=1.4.2"/>
+
+    <!-- Live2D 看板娘 CSS -->
+    <link rel="stylesheet" type="text/css" href="https://live2d.fghrsh.net/assets/1.4.2/waifu.min.css?v=1.4.2"/>
 
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
             min-height: 100vh;
             margin: 0;
-            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
-            overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         .glass {
             background: rgba(255, 255, 255, 0.10);
@@ -94,54 +90,29 @@
         .toast.info { background: #3b82f6; }
         .toast.show { opacity: 1; }
 
-        /* 調整主容器，讓出右下角給看板娘 */
+        /* 让主内容不被看板娘完全挡住 */
         .main-container {
-            max-width: 720px;
-            margin: 2rem auto;
-            padding: 1.5rem;
+            padding-bottom: 380px; /* 给看板娘留出底部空间 */
         }
 
-        /* 小螢幕時縮小主容器並調整看板娘 */
         @media (max-width: 768px) {
             .main-container {
-                max-width: 100%;
-                padding: 1rem;
-            }
-            .waifu {
-                transform: scale(0.75);
-                transform-origin: bottom right;
+                padding-bottom: 320px;
             }
         }
     </style>
 </head>
-<body class="flex flex-col items-center p-4">
+<body class="flex items-center justify-center p-4 main-container">
 
-    <!-- Live2D 看板娘容器 -->
-    <div class="waifu">
-        <div class="waifu-tips"></div>
-        <canvas id="live2d" class="live2d"></canvas>
-        <div class="waifu-tool">
-            <span class="fui-home"></span>
-            <span class="fui-chat"></span>
-            <span class="fui-eye"></span>
-            <span class="fui-user"></span>
-            <span class="fui-photo"></span>
-            <span class="fui-info-circle"></span>
-            <span class="fui-cross"></span>
-        </div>
-    </div>
-
-    <!-- 拖拽遮罩 -->
     <div id="dragOverlay">拖入文件到此处导入</div>
-
-    <!-- 主加密解密界面 -->
-    <div class="main-container glass rounded-xl shadow-2xl relative">
+    
+    <div class="glass rounded-xl shadow-2xl p-6 max-w-2xl w-full relative">
         <div id="loadingSpinner" class="loading">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
         
-        <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-2">🔐 AES-256-GCM + 日文Base 加解密工具</h1>
-        <p class="text-center text-gray-600 text-sm mb-6">流式分塊 · 支持百GB+ · 纯前端 · 右下角看板娘已就位～</p>
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">🔐 AES-256-GCM + 日文Base 加解密工具</h1>
+        <p class="text-center text-gray-600 text-sm mb-6">流式分块 · 支持百GB+ · 纯前端 · 如遇超过2G无法解密请使用Chrome / Edge</p>
         
         <div class="mb-6 text-center">
             <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
@@ -149,7 +120,7 @@
                 <span id="modeText">当前模式：加密</span>
             </span>
         </div>
-
+        
         <div class="mb-6 bg-gray-50 rounded-lg p-4 border">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-medium text-gray-700">密钥设置</h3>
@@ -276,7 +247,6 @@
             <button id="showDetailsButton" class="flex-1 min-w-[140px] bg-amber-500 text-white py-3 px-4 rounded-lg hover:bg-amber-600 hidden">🔍 查看详情</button>
         </div>
         
-        <!-- 详情弹窗 -->
         <div id="detailsModal" class="hidden fixed inset-0 flex items-center justify-center z-50">
             <div class="absolute inset-0 bg-black bg-opacity-50" id="modalBackdrop"></div>
             <div class="glass rounded-xl p-6 max-w-lg w-full mx-4 relative z-10">
@@ -295,45 +265,48 @@
         </div>
     </div>
 
-    <!-- ======================== Live2D 看板娘 必要腳本 ======================== -->
+    <!-- ======================== Live2D 看板娘 ======================== -->
+    <div class="waifu">
+        <div class="waifu-tips"></div>
+        <canvas id="live2d" class="live2d"></canvas>
+        <div class="waifu-tool">
+            <span class="fui-home"></span>
+            <span class="fui-chat"></span>
+            <span class="fui-eye"></span>
+            <span class="fui-user"></span>
+            <span class="fui-photo"></span>
+            <span class="fui-info-circle"></span>
+            <span class="fui-cross"></span>
+        </div>
+    </div>
 
-    <!-- jQuery -->
-    <script src="https://live2d.fghrsh.net/demo/1.4.2/assets/jquery.min.js?v=3.3.1"></script>
-    
-    <!-- jQuery UI -->
-    <script src="https://live2d.fghrsh.net/demo/1.4.2/assets/jquery-ui.min.js?v=1.12.1"></script>
-    
-    <!-- 提示語 -->
-    <script src="https://live2d.fghrsh.net/demo/1.4.2/assets/waifu-tips.min.js?v=1.4.2"></script>
-    
-    <!-- Live2D 核心 -->
-    <script src="https://live2d.fghrsh.net/demo/1.4.2/assets/live2d.min.js?v=1.0.5"></script>
+    <!-- Live2D 依赖 -->
+    <script src="https://live2d.fghrsh.net/assets/1.4.2/jquery.min.js"></script>
+    <script src="https://live2d.fghrsh.net/assets/1.4.2/jquery-ui.min.js"></script>
+    <script src="https://live2d.fghrsh.net/assets/1.4.2/waifu-tips.min.js"></script>
+    <script src="https://live2d.fghrsh.net/assets/1.4.2/live2d.min.js"></script>
 
-    <!-- Live2D 初始化 + 使用 GitHub 上的 waifu-tips.json 代替已失效的原檔 -->
+    <!-- Live2D 初始化设置 -->
     <script>
-        const live2d_settings = {
-            modelId: 1,
-            modelTexturesId: 87,
+        live2d_settings = {
             modelStorage: false,
+            modelId: 1,
+            modelTexturesId: "random",
             canCloseLive2d: true,
             canTurnToHomePage: false,
-            waifuSize: '280x312',
-            waifuTipsSize: '250x110',
-            waifuFontSize: '16px',
-            waifuToolFont: '20px',
-            waifuToolLine: '36px',
-            waifuToolTop: '-50px',
-            waifuDraggable: 'axis-x',
-            homePageUrl: 'https://www.fghrsh.net',
-            toolHoverTips: true
+            waifuSize: "280x312",
+            waifuTipsSize: "250x110",
+            waifuFontSize: "14px",
+            waifuToolFont: "18px",
+            waifuToolLine: "36px",
+            waifuToolTop: "-50px",
+            waifuDraggable: "axis-x",
+            hitokotoAPI: "fghrsh.net"
         };
-
-        // 使用 GitHub raw 連結（2026年仍可用）
-        initModel("https://raw.githubusercontent.com/fghrsh/live2d_demo/master/waifu-tips.json");
+        initModel("https://live2d.fghrsh.net/assets/1.4.2/waifu-tips.json");
     </script>
 
-    <!-- ======================== AES 加解密 主邏輯（完整版） ======================== -->
-
+    <!-- ======================== 原 AES 加解密完整逻辑 ======================== -->
     <script>
         const CURRENT_VERSION = 26;
         const MAGIC_BYTE = 0xF7;
@@ -546,8 +519,14 @@
                 'application/vnd.apple.pages': '.pages',
                 'application/vnd.apple.numbers': '.numbers',
                 'application/vnd.apple.keynote': '.key',
-                'application/pdf': '.pdf',
+                'application/vnd.mozilla.xul+xml': '.xul',
                 'application/vnd.visio': '.vsd',
+                'application/vnd.stardivision.writer': '.sdw',
+                'application/vnd.stardivision.calc': '.sdc',
+                'application/vnd.ms-access': '.mdb',
+                'application/vnd.ms-project': '.mpp',
+                'application/vnd.lotus-wordpro': '.lwp',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.template': '.dotx',
                 'font/woff': '.woff',
                 'font/woff2': '.woff2',
                 'application/font-woff': '.woff',
@@ -566,13 +545,41 @@
                 'application/x-elf': '.elf',
                 'application/java-archive': '.jar',
                 'application/x-shockwave-flash': '.swf',
+                'application/x-msclip': '.clp',
+                'application/x-silverlight-app': '.xap',
                 'application/sql': '.sql',
                 'application/x-sqlite3': '.sqlite',
+                'application/vnd.sqlite3': '.sqlite',
+                'application/vnd.ms-access': '.mdb',
+                'application/vnd.ms-access.addin.mda': '.mda',
+                'application/vnd.ms-access.template.mdt': '.mdt',
+                'application/vnd.ms-access.addin.mda': '.mda',
+                'application/vnd.ms-access.runtime': '.accdr',
+                'application/x-msaccess': '.mdb',
+                'application/vnd.symbian.install': '.sis',
                 'model/stl': '.stl',
+                'model/iges': '.igs',
+                'model/step+xml': '.stp',
+                'model/obj': '.obj',
                 'application/vnd.autocad.dwg': '.dwg',
-                'application/vnd.autocad.dxf': '.dxf'
+                'application/vnd.autocad.dxf': '.dxf',
+                'model/vnd.collada+xml': '.dae',
+                'model/x3d+xml': '.x3d',
+                'model/gltf+json': '.gltf',
+                'model/gltf-binary': '.glb',
+                'application/x-nikon-nef': '.nef',
+                'application/x-canon-cr2': '.cr2',
+                'application/x-sony-arw': '.arw',
+                'application/x-panasonic-rw2': '.rw2',
+                'application/x-fujifilm-raf': '.raf',
+                'application/x-olympus-orf': '.orf',
+                'application/x-freearc': '.arc',
+                'application/vnd.google-earth.kml+xml': '.kml',
+                'application/vnd.google-earth.kmz': '.kmz',
+                'application/x-font-ttf': '.ttf',
+                'audio/x-aac': '.aac'
             };
-            return map[mime] || '.bin';
+            return map[mime] || '';
         }
 
         function isLikelyText(bytes) {
